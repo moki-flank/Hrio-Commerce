@@ -19,7 +19,7 @@ Documentation = "https://github.com/moki-flank/Hrio-Commerce"
 "Bug Tracker" = "https://github.com/moki-flank/Hrio-Commerce/issues"
 
 [tool.comfy]
-PublisherId = "mokiya"
+PublisherId = "moki"
 DisplayName = "Hrio-Commerce"
 Icon = "https://raw.githubusercontent.com/moki-flank/Hrio-Commerce/main/logo.png"
 Banner = "https://raw.githubusercontent.com/moki-flank/Hrio-Commerce/main/banner.png"
