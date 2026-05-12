@@ -1,6 +1,6 @@
 [project]
 name = "hrio-commerce"
-version = "9.1.0"
+version = "9.1.1"
 description = "Hrio Commerce Banana image/video generation nodes for ComfyUI, with normal single-output image node, normal single-output video node, and panel editor."
 license = { text = "Proprietary" }
 requires-python = ">=3.10"
