@@ -1,0 +1,3864 @@
+<!-- FILE: web/banana_prompt_editor.html -->
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Banana 三视图配置</title>
+
+  <style>
+    :root {
+      --page-bg-url: url("https://img.hrio.site/asset_1777135171627.jpg");
+      --bg: #eef7ff;
+      --panel: rgba(255,255,255,.72);
+      --panel-strong: rgba(255,255,255,.9);
+      --ink: #173865;
+      --ink-strong: #082a59;
+      --ink-soft: #55779f;
+      --muted: #7892b2;
+      --blue: #2f80ff;
+      --blue-2: #66a8ff;
+      --blue-3: #dcecff;
+      --line: rgba(90,131,181,.18);
+      --danger: #e55768;
+      --danger-soft: rgba(229,87,104,.12);
+      --ok: #17a878;
+      --warn: #f0a02b;
+      --shadow: 0 18px 52px rgba(42,93,156,.14);
+      --shadow-soft: 0 8px 22px rgba(42,93,156,.1);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    body {
+      background:
+        linear-gradient(180deg, rgba(247,252,255,.82), rgba(229,243,255,.88)),
+        var(--page-bg-url),
+        radial-gradient(circle at 12% 4%, #fff 0, transparent 26%),
+        radial-gradient(circle at 82% 0%, #cfe8ff 0, transparent 34%),
+        linear-gradient(135deg, #f7fbff 0%, #e8f4ff 100%);
+      background-size: cover, cover, auto, auto, auto;
+      background-position: center bottom, center bottom, center, center, center;
+      background-attachment: fixed;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.92) 0 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(89,136,195,.18) 0 1px, transparent 1.4px);
+      background-size: 90px 90px, 140px 140px;
+      background-position: 0 0, 38px 44px;
+      opacity: .36;
+      z-index: 0;
+    }
+
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    button {
+      user-select: none;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1480px, calc(100vw - 36px));
+      height: 100vh;
+      margin: 0 auto;
+      padding: 12px 0 8px;
+      display: grid;
+      grid-template-rows: 58px minmax(0, 1fr) 24px;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 17px;
+      background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(222,241,255,.78));
+      border: 1px solid rgba(255,255,255,.92);
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark svg {
+      width: 25px;
+      height: 25px;
+      display: block;
+    }
+
+    .brand-title {
+      margin: 0;
+      color: var(--ink-strong);
+      font-size: 22px;
+      line-height: 1.05;
+      letter-spacing: -.04em;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .brand-sub {
+      margin-top: 4px;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      height: 38px;
+      border-radius: 13px;
+      padding: 0 14px;
+      border: 1px solid rgba(90,131,181,.2);
+      background: rgba(255,255,255,.66);
+      color: #26517f;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: .16s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(42,93,156,.06);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 10px 22px rgba(42,93,156,.12);
+    }
+
+    .btn.primary {
+      color: #fff;
+      border-color: rgba(255,255,255,.6);
+      background: linear-gradient(135deg, var(--blue), var(--blue-2));
+      box-shadow: 0 14px 26px rgba(47,128,255,.24);
+    }
+
+    .btn.primary.dirty {
+      box-shadow:
+        0 0 0 4px rgba(47,128,255,.14),
+        0 14px 26px rgba(47,128,255,.24);
+    }
+
+    .btn.danger {
+      color: #fff;
+      background: linear-gradient(135deg, #f06b7b, #e55768);
+      border-color: rgba(255,255,255,.5);
+    }
+
+    .btn.ok {
+      color: #fff;
+      background: linear-gradient(135deg, #18b985, #64d8b5);
+      border-color: rgba(255,255,255,.5);
+    }
+
+    .btn.warn {
+      color: #fff;
+      background: linear-gradient(135deg, #f0a02b, #ffc46f);
+      border-color: rgba(255,255,255,.5);
+    }
+
+    .btn.small {
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 11px;
+      font-size: 12px;
+    }
+
+    .workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 236px minmax(390px, 1fr) 560px;
+      gap: 12px;
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: linear-gradient(145deg, rgba(255,255,255,.82), rgba(255,255,255,.56));
+      border: 1px solid rgba(255,255,255,.85);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 10px;
+    }
+
+    .panel-title {
+      margin: 0;
+      color: var(--ink-strong);
+      font-size: 18px;
+      letter-spacing: -.03em;
+      font-weight: 950;
+    }
+
+    .panel-desc {
+      margin: 5px 0 0;
+      color: var(--ink-soft);
+      font-size: 12px;
+      line-height: 1.45;
+      font-weight: 720;
+    }
+
+    .mode-list {
+      min-height: 0;
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .mode-list::-webkit-scrollbar,
+    .prompt-tabs::-webkit-scrollbar,
+    .runtime-grid::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .mode-card {
+      position: relative;
+      width: 100%;
+      min-height: 56px;
+      border-radius: 16px;
+      border: 1px solid rgba(90,131,181,.16);
+      background: rgba(255,255,255,.56);
+      color: var(--ink);
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 31px 1fr;
+      gap: 9px;
+      align-items: center;
+      padding: 8px 10px;
+      text-align: left;
+      transition: .16s ease;
+    }
+
+    .mode-card:hover {
+      background: rgba(255,255,255,.88);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(42,93,156,.09);
+    }
+
+    .mode-card.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--blue), var(--blue-2));
+      border-color: rgba(255,255,255,.76);
+      box-shadow: 0 12px 26px rgba(47,128,255,.26);
+    }
+
+    .mode-sign {
+      width: 31px;
+      height: 31px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(47,128,255,.09);
+      color: #2161b5;
+      font-weight: 950;
+    }
+
+    .mode-card.active .mode-sign {
+      background: rgba(255,255,255,.2);
+      color: #fff;
+    }
+
+    .mode-text {
+      min-width: 0;
+    }
+
+    .mode-text strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 950;
+      line-height: 1.12;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mode-text span {
+      display: block;
+      margin-top: 3px;
+      color: rgba(72,104,143,.82);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mode-card.active .mode-text span {
+      color: rgba(255,255,255,.84);
+    }
+
+    .config-card {
+      border-radius: 18px;
+      padding: 11px;
+      border: 1px solid rgba(90,131,181,.14);
+      background: rgba(255,255,255,.52);
+      display: grid;
+      gap: 8px;
+    }
+
+    .config-card strong {
+      color: var(--ink-strong);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .config-line {
+      color: var(--ink-soft);
+      font-size: 11px;
+      line-height: 1.45;
+      font-weight: 720;
+      word-break: break-word;
+    }
+
+    .mode-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .editor-panel {
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 10px;
+    }
+
+    .prompt-tabs {
+      width: 100%;
+      overflow-x: auto;
+      display: flex;
+      gap: 7px;
+      padding: 1px 0 2px;
+      scrollbar-width: none;
+    }
+
+    .prompt-tab {
+      height: 33px;
+      padding: 0 13px;
+      flex: 0 0 auto;
+      border-radius: 13px;
+      border: 1px solid rgba(90,131,181,.16);
+      background: rgba(255,255,255,.72);
+      color: #496d96;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: .16s ease;
+    }
+
+    .prompt-tab.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--blue), var(--blue-2));
+      border-color: rgba(255,255,255,.66);
+      box-shadow: 0 10px 20px rgba(47,128,255,.18);
+    }
+
+    .prompt-editor-card {
+      min-height: 0;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.82);
+      background: rgba(255,255,255,.56);
+      padding: 11px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+
+    .prompt-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .prompt-card-head strong {
+      color: var(--ink-strong);
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .field-name {
+      color: #6684a8;
+      font-size: 11px;
+      font-weight: 850;
+      background: rgba(47,128,255,.07);
+      border: 1px solid rgba(47,128,255,.12);
+      border-radius: 999px;
+      padding: 4px 9px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      resize: none;
+      outline: none;
+      border: 1px solid rgba(90,131,181,.18);
+      border-radius: 16px;
+      padding: 13px;
+      background: rgba(255,255,255,.78);
+      color: #112f5c;
+      line-height: 1.62;
+      font-size: 13px;
+      font-weight: 650;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+    }
+
+    textarea:focus {
+      border-color: rgba(47,128,255,.5);
+      background: rgba(255,255,255,.92);
+      box-shadow:
+        0 0 0 4px rgba(47,128,255,.08),
+        inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    .editor-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 780;
+    }
+
+    .tips-card {
+      min-height: 50px;
+      border-radius: 18px;
+      border: 1px solid rgba(90,131,181,.13);
+      background: rgba(255,255,255,.44);
+      padding: 9px 11px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      line-height: 1.5;
+      font-weight: 720;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tips-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .preview-panel {
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .preview-switch {
+      height: 38px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .preview-switch button {
+      border: 1px solid rgba(90,131,181,.16);
+      background: rgba(255,255,255,.86);
+      color: #496d96;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 950;
+      cursor: pointer;
+      transition: .16s ease;
+    }
+
+    .preview-switch button.active {
+      color: #fff;
+      border-color: rgba(255,255,255,.64);
+      background: linear-gradient(135deg, var(--blue), var(--blue-2));
+      box-shadow: 0 10px 22px rgba(47,128,255,.22);
+    }
+
+    .preview-content {
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+    }
+
+    .template-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .template-card,
+    .runtime-view {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.92);
+      background: #fff;
+      box-shadow: 0 12px 26px rgba(42,93,156,.1);
+      transition: .16s ease;
+    }
+
+    .template-card:hover,
+    .runtime-view:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 0 3px rgba(47,128,255,.1),
+        0 16px 34px rgba(47,128,255,.14);
+    }
+
+    .template-card img,
+    .runtime-view img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+      background: linear-gradient(180deg, #fff, #f8fbff);
+    }
+
+    .card-label,
+    .runtime-badge {
+      position: absolute;
+      left: 9px;
+      top: 9px;
+      z-index: 2;
+      min-height: 25px;
+      padding: 0 9px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.86);
+      color: #25538a;
+      border: 1px solid rgba(90,131,181,.16);
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 950;
+      backdrop-filter: blur(12px);
+    }
+
+    .live-pill {
+      position: absolute;
+      right: 9px;
+      top: 9px;
+      z-index: 3;
+      min-height: 25px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: rgba(23,168,120,.12);
+      color: #087958;
+      border: 1px solid rgba(23,168,120,.18);
+      display: none;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 950;
+      backdrop-filter: blur(12px);
+    }
+
+    .template-card.has-live .live-pill,
+    .template-card.has-oss .live-pill {
+      display: flex;
+    }
+
+    .upload-mini {
+      position: absolute;
+      left: 9px;
+      bottom: 9px;
+      z-index: 4;
+      height: 29px;
+      padding: 0 10px;
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,.74);
+      background: rgba(47,128,255,.9);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 950;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(47,128,255,.22);
+      backdrop-filter: blur(12px);
+    }
+
+    .upload-mini:hover {
+      transform: translateY(-1px);
+      background: rgba(31,105,230,.95);
+    }
+
+    .remove-preview-mini {
+      position: absolute;
+      right: 9px;
+      bottom: 9px;
+      z-index: 4;
+      height: 29px;
+      padding: 0 10px;
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,.74);
+      background: rgba(229,87,104,.9);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 950;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(229,87,104,.18);
+      backdrop-filter: blur(12px);
+      display: none;
+    }
+
+    .template-card.has-oss .remove-preview-mini {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .runtime-grid {
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      padding-right: 2px;
+    }
+
+    .runtime-group {
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.86);
+      background: rgba(255,255,255,.58);
+      box-shadow: var(--shadow-soft);
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .runtime-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .runtime-title {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .runtime-title strong {
+      color: var(--ink-strong);
+      font-size: 13px;
+      font-weight: 950;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .runtime-title span {
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 760;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .runtime-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .runtime-views {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      min-height: 280px;
+    }
+
+    .runtime-views.one-view {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .runtime-views.two-views {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .runtime-views.three-views {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .runtime-views.four-views {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .runtime-views.five-views {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      min-height: 220px;
+    }
+
+    .runtime-view {
+      cursor: pointer;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+    }
+
+    .runtime-view.success {
+      border-color: rgba(23,168,120,.35);
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(239,255,250,.92));
+    }
+
+    .runtime-view.failed,
+    .runtime-view.error {
+      border-color: rgba(229,87,104,.45);
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,238,240,.92));
+    }
+
+    .runtime-view.pending,
+    .runtime-view.unknown,
+    .runtime-view.missing {
+      border-color: rgba(240,160,43,.38);
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,248,233,.92));
+    }
+
+    .runtime-view-meta {
+      min-height: 78px;
+      padding: 9px;
+      display: grid;
+      gap: 6px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
+    .runtime-error {
+      color: #bd3345;
+      background: var(--danger-soft);
+      border: 1px solid rgba(229,87,104,.18);
+      border-radius: 10px;
+      padding: 6px 8px;
+      max-height: 54px;
+      overflow: hidden;
+    }
+
+    .placeholder {
+      height: 100%;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      text-align: center;
+      color: #6283aa;
+      background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(235,246,255,.9));
+      font-size: 11px;
+      font-weight: 850;
+      line-height: 1.58;
+      word-break: break-all;
+    }
+
+    .preview-footer {
+      min-height: 0;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.84);
+      background: rgba(255,255,255,.58);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .preview-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px 12px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
+    .preview-summary span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .preview-summary span b {
+      color: var(--ink-strong);
+      font-weight: 950;
+    }
+
+    .preview-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      align-items: center;
+    }
+
+    .preview-actions .btn {
+      width: 100%;
+      min-width: 0;
+      padding-left: 10px;
+      padding-right: 10px;
+      justify-content: center;
+    }
+
+    .auto-retry {
+      height: 36px;
+      border-radius: 13px;
+      border: 1px solid rgba(90,131,181,.16);
+      background: rgba(255,255,255,.58);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .auto-retry input {
+      accent-color: var(--blue);
+      margin: 0;
+    }
+
+    .footer {
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #6d89ad;
+      font-size: 12px;
+      font-weight: 820;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 60;
+      right: 20px;
+      bottom: 20px;
+      width: min(430px, calc(100vw - 40px));
+      min-height: 46px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.92);
+      color: var(--ink-strong);
+      border: 1px solid rgba(255,255,255,.9);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      font-size: 13px;
+      font-weight: 880;
+      line-height: 1.5;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: .2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(221,237,252,.56);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-mask.show {
+      display: grid;
+    }
+
+    .modal {
+      width: min(760px, calc(100vw - 48px));
+      max-height: min(860px, calc(100vh - 48px));
+      overflow: auto;
+      border-radius: 24px;
+      background: rgba(255,255,255,.94);
+      border: 1px solid rgba(255,255,255,.95);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      color: var(--ink);
+    }
+
+    .modal h3 {
+      margin: 0 0 10px;
+      color: var(--ink-strong);
+      font-size: 19px;
+    }
+
+    .modal-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .form-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .form-row label {
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .form-row input,
+    .form-row textarea {
+      width: 100%;
+      min-height: 38px;
+      border-radius: 14px;
+      border: 1px solid rgba(90,131,181,.18);
+      outline: none;
+      padding: 9px 11px;
+      background: rgba(255,255,255,.78);
+      color: var(--ink-strong);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .form-row textarea {
+      min-height: 74px;
+      resize: vertical;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .result-modal {
+      width: min(1040px, calc(100vw - 48px));
+      display: grid;
+      gap: 14px;
+    }
+
+    .result-modal-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .result-modal-title {
+      min-width: 0;
+    }
+
+    .result-modal-title h3 {
+      margin: 0;
+      color: var(--ink-strong);
+      font-size: 20px;
+      font-weight: 950;
+      letter-spacing: -.03em;
+    }
+
+    .result-modal-title p {
+      margin: 6px 0 0;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.55;
+    }
+
+    .result-modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .result-modal-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .result-image-wrap {
+      min-height: 420px;
+      border-radius: 20px;
+      border: 1px solid rgba(90,131,181,.16);
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(238,248,255,.92));
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .result-image-wrap img {
+      width: 100%;
+      height: 100%;
+      max-height: calc(100vh - 260px);
+      object-fit: contain;
+      display: block;
+    }
+
+    .result-detail-card {
+      border-radius: 20px;
+      border: 1px solid rgba(90,131,181,.14);
+      background: rgba(255,255,255,.58);
+      padding: 13px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .result-detail-card strong {
+      color: var(--ink-strong);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .result-detail-grid {
+      display: grid;
+      gap: 7px;
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.45;
+    }
+
+    .result-detail-grid b {
+      color: var(--ink-strong);
+      font-weight: 950;
+    }
+
+    .result-log {
+      max-height: 260px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #3e638e;
+      background: rgba(47,128,255,.06);
+      border: 1px solid rgba(47,128,255,.1);
+      border-radius: 14px;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .result-log.error {
+      color: #bd3345;
+      background: rgba(229,87,104,.1);
+      border-color: rgba(229,87,104,.16);
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+
+
+    /* v7.7.0: 运行结果/弹窗文本自适应，长路径和长报错不再撑开窗口 */
+    .runtime-group,
+    .runtime-head,
+    .runtime-title,
+    .runtime-views,
+    .runtime-view,
+    .runtime-view-meta,
+    .result-modal,
+    .result-modal-head,
+    .result-modal-body,
+    .result-detail-card,
+    .result-detail-grid,
+    .result-log {
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .runtime-view-meta > div:first-child,
+    .result-detail-grid > div {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .runtime-error {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      white-space: normal;
+      word-break: break-word;
+      text-overflow: ellipsis;
+    }
+
+    .result-modal {
+      overflow: hidden;
+    }
+
+    .result-modal-title h3,
+    .result-modal-title p {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .result-modal-title h3 {
+      white-space: nowrap;
+    }
+
+    .result-modal-body {
+      max-height: calc(100vh - 170px);
+      overflow: hidden;
+    }
+
+    .result-detail-card {
+      max-height: calc(100vh - 190px);
+      overflow: auto;
+    }
+
+    @media (max-width: 1280px) {
+      .page {
+        width: min(1180px, calc(100vw - 32px));
+      }
+
+      .workspace {
+        grid-template-columns: 220px minmax(360px, 1fr) 450px;
+      }
+
+      .preview-summary {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      html,
+      body {
+        height: auto;
+        min-height: 100%;
+        overflow: auto;
+      }
+
+      .page {
+        height: auto;
+        min-height: 100vh;
+        grid-template-rows: auto auto 30px;
+      }
+
+      .topbar {
+        height: auto;
+        grid-template-columns: 1fr;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+        overflow-x: auto;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+        overflow: visible;
+      }
+
+      .left-panel,
+      .editor-panel,
+      .preview-panel {
+        min-height: auto;
+      }
+
+      .mode-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .template-grid,
+      .runtime-views {
+        min-height: 460px;
+      }
+
+      .result-modal-body {
+        grid-template-columns: 1fr;
+      }
+
+      .result-image-wrap {
+        min-height: 360px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100vw - 18px, 520px);
+        padding-top: 10px;
+      }
+
+      .mode-list,
+      .template-grid,
+      .runtime-views,
+      .preview-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .runtime-views.one-view,
+      .runtime-views.two-views,
+      .runtime-views.three-views,
+      .runtime-views.four-views,
+      .runtime-views.five-views {
+        grid-template-columns: 1fr;
+      }
+
+      .result-modal-head {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-actions {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tips-card {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-title {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <header class="topbar">
+      <section class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none">
+            <path d="M33 8c7 6 11 12 12 19 2 13-7 25-20 29-5 1-10 0-13-3 13-5 18-14 16-26-1-7 1-13 5-19Z" fill="#2f80ff"/>
+            <path d="M35 8c2 11 7 18 17 22-7 3-15 3-22-1-6-4-8-11-5-18 2-3 5-5 10-3Z" fill="#8cc4ff"/>
+            <path d="M23 53c13-5 21-15 22-28" stroke="#0f4f9f" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">专业电商三视图 AI 生成</h1>
+          <div class="brand-sub">提示词实时同步 · 模式可增删 · OSS 预览图 · 三视图重跑</div>
+        </div>
+      </section>
+
+      <section class="top-actions">
+        <button class="btn" id="importBtn">导入配置</button>
+        <button class="btn" id="exportBtn">导出配置</button>
+        <button class="btn primary" id="saveBtn">保存配置</button>
+      </section>
+    </header>
+
+    <section class="workspace">
+      <aside class="panel left-panel" id="configPanel">
+        <div>
+          <h2 class="panel-title">模式选择</h2>
+          <p class="panel-desc">编辑内容会实时广播给 ComfyUI 节点；新建模式可直接上传 OSS 预览图。</p>
+        </div>
+
+        <div class="mode-list" id="modeList"></div>
+
+        <div class="config-card">
+          <strong>模式管理</strong>
+          <div class="mode-tools">
+            <button class="btn small" id="addModeBtn">新增</button>
+            <button class="btn small" id="editModeBtn">编辑</button>
+            <button class="btn small" id="copyModeBtn">复制</button>
+            <button class="btn small danger" id="deleteModeBtn">删除</button>
+          </div>
+
+          <strong>配置管理</strong>
+          <div class="config-line" id="statusBox">配置状态：正在读取...</div>
+          <button class="btn" id="resetModeBtn">恢复当前模式默认</button>
+          <button class="btn danger" id="clearLocalBtn">清空本地缓存</button>
+        </div>
+      </aside>
+
+      <section class="panel editor-panel" id="editorPanel">
+        <div class="prompt-tabs" id="promptTabs"></div>
+
+        <div class="prompt-editor-card">
+          <div class="prompt-card-head">
+            <strong id="fieldTitle">参考图角色说明</strong>
+            <span class="field-name" id="fieldName">image_roles</span>
+          </div>
+
+          <textarea id="promptText" spellcheck="false"></textarea>
+
+          <div class="editor-meta">
+            <span id="charCount">0 字符</span>
+            <span id="saveHint">实时同步中</span>
+          </div>
+        </div>
+
+        <div class="tips-card">
+          <span class="tips-text" id="currentModeTip">当前模式：服装迁移</span>
+          <button class="btn" id="copyPromptBtn">复制完整提示词</button>
+          <button class="btn" id="copyJsonBtn">复制当前 JSON</button>
+        </div>
+      </section>
+
+      <aside class="panel preview-panel" id="previewPanel">
+        <div class="preview-switch">
+          <button class="active" data-preview-mode="template">当前预览</button>
+          <button data-preview-mode="runtime">最近生成</button>
+          <button data-preview-mode="failed">仅看报错</button>
+        </div>
+
+        <div class="preview-content">
+          <div class="template-grid" id="templateGrid">
+            <div class="template-card" data-card="front">
+              <div class="card-label">正面图</div>
+              <div class="live-pill" data-pill="front">OSS预览</div>
+              <button class="upload-mini" data-upload-view="front">上传预览</button>
+              <button class="remove-preview-mini" data-remove-view="front">移除</button>
+              <img data-template-img="front" alt="正面预览图" />
+            </div>
+            <div class="template-card" data-card="side">
+              <div class="card-label">侧面图</div>
+              <div class="live-pill" data-pill="side">OSS预览</div>
+              <button class="upload-mini" data-upload-view="side">上传预览</button>
+              <button class="remove-preview-mini" data-remove-view="side">移除</button>
+              <img data-template-img="side" alt="侧面预览图" />
+            </div>
+            <div class="template-card" data-card="back">
+              <div class="card-label">背面图</div>
+              <div class="live-pill" data-pill="back">OSS预览</div>
+              <button class="upload-mini" data-upload-view="back">上传预览</button>
+              <button class="remove-preview-mini" data-remove-view="back">移除</button>
+              <img data-template-img="back" alt="背面预览图" />
+            </div>
+          </div>
+
+          <div class="runtime-grid" id="runtimeGrid" style="display:none"></div>
+        </div>
+
+        <div class="preview-footer">
+          <div class="preview-summary">
+            <span>当前模式：<b id="infoMode">服装迁移</b></span>
+            <span>预览状态：<b id="runtimePollState">等待读取</b></span>
+            <span>推荐模型：<b id="infoModel">banano2</b></span>
+            <span>推荐尺寸：<b id="infoSize">4K</b></span>
+            <span>默认比例：<b id="infoRatio">16:9</b></span>
+            <span>同步状态：<b id="syncState">已连接</b></span>
+          </div>
+
+          <div class="preview-actions">
+            <button class="btn primary" id="refreshRuntimeBtn">刷新结果</button>
+            <button class="btn warn" id="rerunAllBtn">重跑全部</button>
+            <button class="btn" id="downloadBtn">下载配置</button>
+            <button class="btn" id="copyCloudPathsBtn">复制图路径</button>
+            <label class="auto-retry">
+              <input type="checkbox" id="autoRetryToggle" checked />
+              报错自动重抽
+            </label>
+            <button class="btn danger" id="clearRuntimeBtn">清空预览</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="footer" id="footerText">
+      Banana 三视图提示词编辑器 · v3.4.4
+    </footer>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-mask" id="modeModal">
+    <div class="modal">
+      <h3 id="modeModalTitle">新增模式</h3>
+      <div class="modal-grid">
+        <div class="form-row">
+          <label>模式名称</label>
+          <input id="modeTitleInput" placeholder="例如：沙漠成绩 / 模特创建 / 鞋包三视图" />
+        </div>
+        <div class="form-row">
+          <label>模式 Key</label>
+          <input id="modeKeyInput" placeholder="例如：custom_desert_result" />
+        </div>
+        <div class="form-row">
+          <label>图标字</label>
+          <input id="modeIconInput" placeholder="例如：新" maxlength="4" />
+        </div>
+        <div class="form-row">
+          <label>副标题</label>
+          <input id="modeSubInput" placeholder="左侧卡片下方说明" />
+        </div>
+        <div class="form-row">
+          <label>模式描述</label>
+          <textarea id="modeDescInput" placeholder="用于说明该模式的用途"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="cancelModeBtn">取消</button>
+        <button class="btn primary" id="saveModeBtn">保存模式</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="resultModal">
+    <div class="modal result-modal">
+      <div class="result-modal-head">
+        <div class="result-modal-title">
+          <h3 id="resultModalTitle">生成结果详情</h3>
+          <p id="resultModalSub">查看图片、OSS URL、报错、seed、attempt 和重抽入口。</p>
+        </div>
+        <div class="result-modal-actions">
+          <button class="btn primary" id="retryCurrentBtn">重新生成当前图</button>
+          <button class="btn" id="copyCurrentImageUrlBtn">复制图片 URL</button>
+          <button class="btn" id="retryAllFromModalBtn">重跑全部</button>
+          <button class="btn" id="closeResultBtn">关闭</button>
+        </div>
+      </div>
+
+      <div class="result-modal-body">
+        <div class="result-image-wrap" id="resultImageWrap">
+          <img id="resultModalImg" alt="生成图预览" />
+        </div>
+
+        <aside class="result-detail-card">
+          <strong>结果信息</strong>
+          <div class="result-detail-grid" id="resultMetaGrid"></div>
+          <strong>详细说明 / 报错信息</strong>
+          <div class="result-log" id="resultLog"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept="application/json,.json" style="display:none" />
+  <input type="file" id="previewFileInput" accept="image/*" class="hidden-file" />
+
+  <script>
+    const DEFAULT_PLUGIN_VERSION = "3.4.4";
+    const PAGE_BACKGROUND_URL = "https://img.hrio.site/asset_1777135171627.jpg";
+    const PREVIEW_BASE_URL = "https://img.hrio.site/plugins2/previews";
+    const PREVIEW_EXT = "png";
+
+    const API_BASE_CANDIDATES = [
+      "",
+      "http://bj-aliyun-1.moki.wang:18000/api",
+      "https://zheshihouduan.tenx-jingli.cloud/api"
+    ];
+
+    const SIMPLE_UPLOAD_ROUTES = [
+      "/ai-ecommerce/upload-preview",
+      "/ai-ecommerce/upload/image",
+      "/banana/ecommerce-preview-upload",
+      "/banana/upload-preview",
+      "/upload/image",
+      "/uploads/image",
+      "/api/upload/image",
+      "/api/uploads/image"
+    ];
+
+    const PRESIGN_ROUTES = [
+      "/ai-ecommerce/uploads/presign",
+      "/banana/uploads/presign",
+      "/uploads/presign",
+      "/api/uploads/presign"
+    ];
+
+    const MANIFEST_ROUTES = ["/ai-ecommerce/manifest", "/banana/ecommerce-manifest"];
+    const CONFIG_GET_ROUTES = ["/ai-ecommerce/config", "/banana/ecommerce-prompt-config"];
+    const CONFIG_POST_ROUTES = ["/ai-ecommerce/config", "/banana/ecommerce-prompt-config"];
+    const RUNTIME_GET_ROUTES = ["/banana/runtime", "/banana/ecommerce-runtime-results", "/ai-ecommerce/runtime"];
+    const RUNTIME_CLEAR_ROUTES = ["/banana/runtime/clear", "/banana/ecommerce-runtime-results/clear", "/banana/ecommerce-runtime-clear", "/ai-ecommerce/runtime/clear"];
+
+    const COMMAND_CHANNEL = "banana_three_view_bridge";
+    const COMMAND_STORAGE_KEY = "banana_three_view_command";
+    const LIVE_CONFIG_KEY = "banana_three_view_live_config";
+    const LOCAL_CACHE_KEY = "banana.promptEditor.cache";
+
+    document.documentElement.style.setProperty("--page-bg-url", `url("${PAGE_BACKGROUND_URL}")`);
+
+    const FIELD_DEFS = [
+      ["image_roles", "角色", "参考图角色说明"],
+      ["global_prompt", "全局", "全局任务提示词"],
+      ["front_prompt", "正面", "正面图提示词"],
+      ["side_prompt", "侧面", "侧面图提示词"],
+      ["back_prompt", "背面", "背面图提示词"],
+      ["consistency_prompt", "一致性", "三图一致性约束"],
+      ["negative_prompt", "反向约束", "反向约束 / 禁止事项"]
+    ];
+
+    const DEFAULT_MODE_META = {
+      fashion_replace: {
+        title: "服装迁移",
+        icon: "衣",
+        sub: "A服装 / B模特",
+        desc: "将 A 图服装完整替换到 B 图模特身上，生成正侧背三视图。"
+      },
+      model_tryon: {
+        title: "服装穿戴",
+        icon: "穿",
+        sub: "图1模特 / 图2-N全部穿戴",
+        desc: "图片1作为目标模特，其余所有图片全部作为穿戴商品，替换并穿到模特身上。"
+      },
+      pose_transfer: {
+        title: "动作迁移",
+        icon: "姿",
+        sub: "A角色 / B动作",
+        desc: "只迁移动作与肢体语言，不迁移 B 图具体造型元素。"
+      },
+      texture_pattern_transfer: {
+        title: "印花面料迁移",
+        icon: "纹",
+        sub: "A印花 / B版型",
+        desc: "保留 B 图版型结构，将 A 图面料、纹理、印花迁移到表面。"
+      },
+      product_three_view: {
+        title: "单品三视图",
+        icon: "物",
+        sub: "单图商品",
+        desc: "以单张商品图为唯一来源，生成标准正侧背白底三视图。"
+      },
+      white_bg_refine: {
+        title: "白底主图精修",
+        icon: "净",
+        sub: "主图增强",
+        desc: "不改变主体设计，提升清晰度、质感和边缘干净度。"
+      },
+      model_create: {
+        title: "模特创建",
+        icon: "模",
+        sub: "参考图 / 新模特",
+        desc: "基于参考图创建专业电商模特形象，并输出正侧背三视图。"
+      }
+    };
+
+    const DEFAULT_MODE_OPTIONS = {
+      "服装迁移": "fashion_replace",
+      "服装穿戴": "model_tryon",
+      "动作迁移": "pose_transfer",
+      "印花面料迁移": "texture_pattern_transfer",
+      "单品三视图": "product_three_view",
+      "白底主图精修": "white_bg_refine",
+      "模特创建": "model_create"
+    };
+
+    const DEFAULT_PROMPTS = {
+      fashion_replace: {
+        preview_urls: {},
+        image_roles: "Image A（reference_image_1）= 服装/穿搭来源图；Image B（reference_image_2）= 目标样板/模特/人台。A 只提供服装本身；B 只提供被换装的主体。",
+        global_prompt: "模式：服装迁移。请保留 Image B 的主体身份、脸部、发型、身体比例、肤色、五官与主体结构不变，仅将 Image A 中的服装、颜色、面料、图案、辅料、结构与配件完整替换到 Image B 身上。如果 B 原本已有穿戴，则全部替换。三次请求使用完全相同的参考图输入，只改变视角提示词。",
+        front_prompt: "请输出【正面图】。主体正面朝向镜头，完整展示换装后的服装正面信息，清晰展示领口、胸前、门襟、袖型、下摆、正面印花、图案、文字等。",
+        side_prompt: "请输出【侧面图】。主体严格 90 度侧身，完整展示服装侧面轮廓、厚度、垂坠、侧缝、袖型侧面、层次关系。",
+        back_prompt: "请输出【背面图】。主体背对镜头，完整展示服装背面结构、后领、后片、背部图案、文字、后摆等细节。",
+        consistency_prompt: "三张图必须是同一个目标样板、同一套服装、同一灯光、同一白底、同一镜头距离。只允许视角变化，不允许主体身份、服装款式、颜色、面料、比例发生变化。",
+        negative_prompt: "禁止保留目标样板原有服装；禁止引入额外人物、背景道具、复杂场景；禁止拼图、多视图排版、标注、水印、logo、多人、错误肢体。"
+      },
+      model_tryon: {
+        preview_urls: {},
+        image_roles: "Image A（reference_image_1）= 目标模特/人台/人物，是唯一主体来源；Image B 到最后一张图（reference_image_2...reference_image_N）= 全部需要穿戴到 A 身上的商品，可以是服装、鞋子、包袋、帽子、首饰、眼镜、配饰或其他穿戴物。",
+        global_prompt: "模式：服装穿戴。请严格保留 Image A 中模特/人物的身份、五官、脸型、发型、肤色、身体比例、年龄感、气质与姿态基础不变。请将 Image B 到最后一张图中的所有商品全部自然穿戴到 Image A 模特身上。除图片1外，其余上传图片全部都作为穿戴商品来源，不得遗漏。",
+        front_prompt: "请输出【正面图】。A 模特正面朝向镜头，完整展示所有穿戴商品的正面效果，包括上装、下装、鞋、包、帽子、首饰、眼镜等可见品类。",
+        side_prompt: "请输出【侧面图】。A 模特严格 90 度侧身，展示所有穿戴商品的侧面轮廓、厚度、垂坠、层次、鞋包配饰位置和真实遮挡关系。",
+        back_prompt: "请输出【背面图】。A 模特背对镜头，展示所有穿戴商品的背面结构、后片、后摆、背部图案、包袋背面、鞋跟或配饰背面细节。",
+        consistency_prompt: "三张图必须是同一个 A 模特、同一组 B-N 商品、同一套穿戴关系、同一灯光、同一白底、同一镜头距离。只允许视角变化，不允许模特身份、商品款式、颜色、材质、Logo、文字、图案、比例发生变化。",
+        negative_prompt: "禁止遗漏后续参考图商品；禁止把商品图里的背景、道具、其他人物带入；禁止新增参考图不存在的服装、配饰、文字或 Logo；禁止多人物、拼图、三联图、九宫格、水印、低清晰度、身体畸形、穿帮、错位、漂浮。"
+      },
+      pose_transfer: {
+        preview_urls: {},
+        image_roles: "Image A（reference_image_1）= 主体内容唯一来源；Image B（reference_image_2）= 动作、姿态、肢体语言与表现手法参考。",
+        global_prompt: "模式：动作迁移。请严格保留 Image A 中主体的所有外观特征，包括造型、颜色、比例、五官、服饰、文字、Logo、图案、材质、结构与细节完全不变，仅让主体做出 Image B 中展示的动作、姿态和肢体语言。生成图片的所有视觉内容必须且只能来自 A；B 只提供动作参考，不得引入 B 的任何具体内容元素。",
+        front_prompt: "请输出【正面图】。在正面视角下重建动作迁移效果，保持主体仍然完全来自 A，动作来自 B。",
+        side_prompt: "请输出【侧面图】。在严格侧面视角下重建同一动作与肢体语言，展示清晰侧面动态轮廓。",
+        back_prompt: "请输出【背面图】。在背面视角下重建同一动作与肢体语言，展示背面动作结构，主体外观仍严格来自 A。",
+        consistency_prompt: "三张图必须保持同一个 A 图主体与同一个动作迁移逻辑，只改变观看视角。",
+        negative_prompt: "严禁引入 B 图中的具体文字、图案、角色、装饰、配色方案或额外元素；严禁主体设计漂移、服装变化、五官变化、比例变化。"
+      },
+      texture_pattern_transfer: {
+        preview_urls: {},
+        image_roles: "Image A（reference_image_1）= 印花、面料、花型来源图；Image B（reference_image_2）= 目标服装版型或目标商品。",
+        global_prompt: "模式：印花面料迁移。请保留 Image B 的服装版型、商品结构、主体轮廓与样板基础不变，仅将 Image A 中的印花、面料肌理、图案风格与色彩方案迁移到 Image B 对应表面。",
+        front_prompt: "请输出【正面图】。正面清晰展示迁移后的面料、印花覆盖效果与版型关系。",
+        side_prompt: "请输出【侧面图】。侧面清晰展示面料垂坠、厚度与印花延展逻辑。",
+        back_prompt: "请输出【背面图】。背面清晰展示印花、面料在背部区域的完整延续效果。",
+        consistency_prompt: "三张图必须保持同一个目标版型与同一套迁移后的面料、印花方案，只改变视角。",
+        negative_prompt: "禁止改动目标版型轮廓；禁止引入额外人物、场景、道具、拼贴、标注、水印、logo。"
+      },
+      product_three_view: {
+        preview_urls: {},
+        image_roles: "Image A（reference_image_1）= 商品唯一内容来源。",
+        global_prompt: "模式：单品三视图。请以 Image A 的商品为唯一内容来源，生成标准电商三视图。必须严格保留商品的结构、比例、颜色、材质、五金、图案、文字与所有识别性细节。",
+        front_prompt: "请输出【正面图】。商品居中，正面朝向镜头，完整展示主视觉面。",
+        side_prompt: "请输出【侧面图】。商品严格侧向展示，清晰显示厚度、侧面结构与轮廓。",
+        back_prompt: "请输出【背面图】。商品背对镜头，清晰展示背部结构、接口、缝线、后部细节。",
+        consistency_prompt: "三张图必须是同一个商品，仅改变角度，不改变任何造型、材质、颜色、印花、文字与比例。",
+        negative_prompt: "禁止支架、场景化背景、道具、额外装饰、拼版、多商品、文字标识、水印、logo。"
+      },
+      white_bg_refine: {
+        preview_urls: {},
+        image_roles: "Image A（reference_image_1）= 主体来源图。",
+        global_prompt: "模式：白底主图精修。请以 Image A 为主体来源，在不改变核心商品或主体设计的前提下，输出更适合电商发布的正面、侧面、背面白底图。重点提升清晰度、材质质感、边缘干净度与商业观感。",
+        front_prompt: "请输出【正面图】。主体正面清晰、白底干净、商业质感强。",
+        side_prompt: "请输出【侧面图】。主体侧面结构清楚，边缘锐利，便于详情页使用。",
+        back_prompt: "请输出【背面图】。主体背面信息完整，光影干净，适合白底电商展示。",
+        consistency_prompt: "三张图保持同一主体与同一白底棚拍风格，只改变视角。",
+        negative_prompt: "禁止场景化背景、道具、夸张特效、拼版、文字标识、水印、logo。"
+      },
+      model_create: {
+        preview_urls: {},
+        image_roles: "Image A 及后续参考图 = 服装、配饰、风格或商品参考。如果只提供 1 张图，则以该图中的商品或服装为核心。",
+        global_prompt: "模式：模特创建。请基于上传的参考图，创建一个全新的专业电商模特形象，并让该模特合理穿戴参考图中的服装、商品、配饰。模特必须具备商业电商拍摄质感、自然比例、时尚审美、完整身体结构。",
+        front_prompt: "请输出【正面图】。新创建的模特正面朝向镜头，完整展示整套造型正面。",
+        side_prompt: "请输出【侧面图】。新创建的模特严格 90 度侧身，完整展示整套造型侧面轮廓。",
+        back_prompt: "请输出【背面图】。新创建的模特背对镜头，完整展示整套造型背面。",
+        consistency_prompt: "三张图必须保持同一个新创建的模特身份、同一发型、同一身材比例、同一套服装与配饰、同一灯光与白底。",
+        negative_prompt: "禁止多人、禁止多套造型混乱叠加、禁止复杂背景、禁止拼接排版、禁止标注、水印、logo。"
+      }
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    const appState = {
+      pluginVersion: DEFAULT_PLUGIN_VERSION,
+      manifest: null,
+      dirty: false,
+      previewBaseUrl: PREVIEW_BASE_URL,
+      previewExt: PREVIEW_EXT,
+      previewMode: "template",
+      modeOptions: { ...DEFAULT_MODE_OPTIONS },
+      modeMeta: deepClone(DEFAULT_MODE_META),
+      runtime: { groups: [] },
+      autoRetry: true,
+      lastRetryAt: {},
+      retryCooldownMs: 8500,
+      currentModal: null,
+      modeModalType: "add",
+      uploadTargetView: null,
+      currentModalImageUrl: ""
+    };
+
+    let currentModeKey = "fashion_replace";
+    let currentModeTitle = "服装迁移";
+    let currentFieldKey = "image_roles";
+    let configByMode = deepClone(DEFAULT_PROMPTS);
+    let liveSyncTimer = null;
+    let autoSaveTimer = null;
+
+    function deepClone(obj) {
+      return JSON.parse(JSON.stringify(obj || {}));
+    }
+
+    function toast(message) {
+      const el = $("#toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(window.__bananaToastTimer);
+      window.__bananaToastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function setStatus(message) {
+      $("#statusBox").textContent = message;
+    }
+
+    function setSyncState(message) {
+      $("#syncState").textContent = message;
+    }
+
+    function markDirty(value = true) {
+      appState.dirty = value;
+      $("#saveBtn").classList.toggle("dirty", value);
+      $("#saveBtn").textContent = value ? "保存配置 *" : "保存配置";
+      $("#saveHint").textContent = value ? "已实时同步，等待保存" : "已同步";
+    }
+
+    function slugify(value) {
+      const raw = String(value || "").trim().toLowerCase();
+      const ascii = raw
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/-+/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      return ascii || `custom_mode_${Date.now()}`;
+    }
+
+    function modeKeyToTitle(key) {
+      const found = Object.entries(appState.modeOptions).find(([, value]) => value === key);
+      if (found) return found[0];
+      return appState.modeMeta[key]?.title || key;
+    }
+
+    function modeKeyToDef(key) {
+      const title = modeKeyToTitle(key);
+      const meta = appState.modeMeta[key] || {};
+      return {
+        key,
+        title,
+        icon: meta.icon || title.slice(0, 1) || "新",
+        sub: meta.sub || "自定义模式",
+        desc: meta.desc || "自定义三视图生成模式。"
+      };
+    }
+
+    function createBlankPrompt(title = "自定义模式") {
+      return {
+        preview_urls: {},
+        image_roles: `Image A = ${title} 主体参考；Image B 或后续图片 = 补充参考。`,
+        global_prompt: `模式：${title}。请基于上传参考图完成三视图生成，保持主体、材质、结构、颜色和关键识别细节稳定。`,
+        front_prompt: "请输出【正面图】。主体正面朝向镜头，完整展示正面结构与细节。",
+        side_prompt: "请输出【侧面图】。主体严格侧面展示，完整展示侧面轮廓、厚度、层次和结构。",
+        back_prompt: "请输出【背面图】。主体背对镜头，完整展示背面结构和细节。",
+        consistency_prompt: "三张图必须保持同一个主体、同一套结构、同一材质、同一颜色、同一灯光和同一白底，只允许视角变化。",
+        negative_prompt: "禁止多人物、复杂背景、拼接排版、错误文字、水印、logo、结构变形、比例错误、低清晰度。"
+      };
+    }
+
+    function ensureModeExists(key, title = "") {
+      if (!key) return;
+
+      const display = title || modeKeyToTitle(key) || key;
+
+      if (!Object.values(appState.modeOptions).includes(key)) {
+        appState.modeOptions[display] = key;
+      }
+
+      if (!appState.modeMeta[key]) {
+        appState.modeMeta[key] = {
+          title: display,
+          icon: display.slice(0, 1) || "新",
+          sub: "自定义模式",
+          desc: "自定义三视图生成模式。"
+        };
+      }
+
+      if (!configByMode[key]) {
+        configByMode[key] = createBlankPrompt(display);
+      }
+
+      if (!configByMode[key].preview_urls || typeof configByMode[key].preview_urls !== "object") {
+        configByMode[key].preview_urls = {};
+      }
+    }
+
+    function currentModeConfig() {
+      ensureModeExists(currentModeKey);
+      return configByMode[currentModeKey];
+    }
+
+    function snapshotCurrentText() {
+      const text = $("#promptText");
+      if (!text) return;
+      if (!currentModeKey || !currentFieldKey) return;
+
+      ensureModeExists(currentModeKey);
+      configByMode[currentModeKey][currentFieldKey] = text.value;
+    }
+
+    function saveTextToState() {
+      snapshotCurrentText();
+
+      try {
+        const payload = buildExportPayload({ skipSnapshot: true });
+        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn("[banana editor] saveTextToState failed:", error);
+      }
+    }
+
+    function modeTitleToKey(value) {
+      const raw = String(value || "").trim();
+
+      if (appState.modeMeta[raw]) return raw;
+
+      const byTitle = Object.entries(appState.modeOptions).find(([title]) => title === raw);
+      if (byTitle) return byTitle[1];
+
+      const byKey = Object.values(appState.modeOptions).find((key) => key === raw);
+      if (byKey) return byKey;
+
+      return slugify(raw);
+    }
+
+    function normalizeConfig(raw) {
+      const cfg = raw && raw.config ? raw.config : raw;
+      const out = deepClone(DEFAULT_PROMPTS);
+
+      if (!cfg || typeof cfg !== "object") {
+        return out;
+      }
+
+      appState.config = cfg;
+      appState.pluginVersion = cfg.plugin_version || appState.pluginVersion || DEFAULT_PLUGIN_VERSION;
+      appState.previewBaseUrl = cfg.preview_base_url || appState.previewBaseUrl || PREVIEW_BASE_URL;
+      appState.previewExt = cfg.preview_ext || appState.previewExt || PREVIEW_EXT;
+
+      if (cfg.mode_meta && typeof cfg.mode_meta === "object") {
+        appState.modeMeta = deepClone(cfg.mode_meta);
+      }
+
+      if (cfg.mode_options && typeof cfg.mode_options === "object") {
+        appState.modeOptions = {};
+
+        Object.entries(cfg.mode_options).forEach(([display, key]) => {
+          const d = String(display || "").trim();
+          const k = String(key || "").trim();
+
+          if (!d || !k) return;
+          if (["accessory_tryon", "model_create", "ai_design", "ai_designer", "designer_theme"].includes(k)) return;
+
+          appState.modeOptions[d] = k;
+          ensureModeExists(k, d);
+        });
+      }
+
+      const modes = cfg.modes || cfg.prompts || {};
+      if (modes && typeof modes === "object") {
+        Object.entries(modes).forEach(([modeKey, modeData]) => {
+          const key = String(modeKey || "").trim();
+          if (!key) return;
+          if (["accessory_tryon", "model_create", "ai_design", "ai_designer", "designer_theme"].includes(key)) return;
+
+          const title = modeKeyToTitle(key);
+          const base = out[key] || createBlankPrompt(title);
+
+          out[key] = {
+            ...base,
+            ...(modeData || {}),
+          };
+
+          if (!out[key].preview_urls || typeof out[key].preview_urls !== "object") {
+            out[key].preview_urls = {};
+          }
+        });
+      }
+
+      // 关键修复：重新查找顶层 preview_urls，并挂回每个模式
+      const topPreviewUrls = cfg.preview_urls || cfg.previewUrls || {};
+      if (topPreviewUrls && typeof topPreviewUrls === "object") {
+        Object.entries(topPreviewUrls).forEach(([modeKey, urls]) => {
+          const key = String(modeKey || "").trim();
+          if (!key || !urls || typeof urls !== "object") return;
+
+          if (!out[key]) {
+            out[key] = createBlankPrompt(modeKeyToTitle(key));
+          }
+
+          if (!out[key].preview_urls || typeof out[key].preview_urls !== "object") {
+            out[key].preview_urls = {};
+          }
+
+          ["front", "side", "back"].forEach((view) => {
+            if (urls[view]) {
+              out[key].preview_urls[view] = urls[view];
+            }
+          });
+        });
+      }
+
+      Object.values(appState.modeOptions || {}).forEach((key) => {
+        if (!out[key]) {
+          out[key] = createBlankPrompt(modeKeyToTitle(key));
+        }
+
+        if (!out[key].preview_urls || typeof out[key].preview_urls !== "object") {
+          out[key].preview_urls = {};
+        }
+      });
+
+      return out;
+    }
+
+    async function fetchJsonFirst(routes) {
+      let lastError = null;
+
+      for (const route of routes) {
+        try {
+          const res = await fetch(route, { cache: "no-store" });
+          if (!res.ok) throw new Error(`${route} HTTP ${res.status}`);
+          const json = await res.json();
+          return { route, json };
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error("没有可用配置接口");
+    }
+
+    async function postJsonFirst(routes, payload) {
+      let lastError = null;
+
+      for (const route of routes) {
+        try {
+          const res = await fetch(route, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) throw new Error(`${route} HTTP ${res.status}`);
+
+          const json = await res.json().catch(() => ({}));
+          return { route, json };
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error("没有可用保存接口");
+    }
+
+    async function loadManifest() {
+      try {
+        const { json } = await fetchJsonFirst(MANIFEST_ROUTES);
+        appState.manifest = json;
+        appState.pluginVersion = json.plugin_version || DEFAULT_PLUGIN_VERSION;
+
+        const cfg = json.ecommerce_three_view || json || {};
+        appState.previewBaseUrl = cfg.preview_base_url || json.preview_base_url || PREVIEW_BASE_URL;
+        appState.previewExt = cfg.preview_ext || json.preview_ext || PREVIEW_EXT;
+
+        const incomingModes = cfg.mode_options || json.mode_options;
+        if (incomingModes && typeof incomingModes === "object") {
+          Object.entries(incomingModes).forEach(([display, key]) => {
+            const k = String(key || "").trim();
+            const d = String(display || k).trim();
+            if (!k || !d) return;
+            appState.modeOptions[d] = k;
+            ensureModeExists(k, d);
+          });
+        }
+
+        $("#infoModel").textContent = cfg.default_model || "banano2";
+        $("#infoSize").textContent = cfg.default_image_size || "4K";
+        $("#infoRatio").textContent = cfg.default_aspect_ratio || "16:9";
+      } catch {
+        appState.pluginVersion = DEFAULT_PLUGIN_VERSION;
+      }
+
+      renderFooter();
+    }
+
+    async function loadConfig() {
+      try {
+        setStatus("配置状态：正在读取后端配置...");
+        const { route, json } = await fetchJsonFirst(CONFIG_GET_ROUTES);
+        configByMode = normalizeConfig(json);
+        setStatus(`配置状态：已从 ${route} 读取`);
+        toast("已读取后端配置");
+      } catch {
+        const cached = localStorage.getItem(LOCAL_CACHE_KEY) || localStorage.getItem(LIVE_CONFIG_KEY);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            configByMode = normalizeConfig(parsed.config || parsed);
+            setStatus("配置状态：后端不可用，已读取本地缓存");
+          } catch {
+            configByMode = deepClone(DEFAULT_PROMPTS);
+            setStatus("配置状态：使用页面默认配置");
+          }
+        } else {
+          configByMode = deepClone(DEFAULT_PROMPTS);
+          setStatus("配置状态：使用页面默认配置");
+        }
+      }
+
+      ensureCurrentModeValid();
+      markDirty(false);
+      renderAll();
+      publishLiveConfig("load_config", false);
+    }
+
+    function ensureCurrentModeValid() {
+      const keys = Object.values(appState.modeOptions);
+      if (!keys.includes(currentModeKey)) {
+        currentModeKey = keys[0] || "fashion_replace";
+      }
+
+      ensureModeExists(currentModeKey, modeKeyToTitle(currentModeKey));
+
+      if (!FIELD_DEFS.some(([key]) => key === currentFieldKey)) {
+        currentFieldKey = "image_roles";
+      }
+    }
+
+    function renderModes() {
+      const box = $("#modeList");
+      if (!box) return;
+
+      box.innerHTML = "";
+      const keys = [...new Set(Object.values(appState.modeOptions || {}))];
+
+      keys.forEach((key) => {
+        ensureModeExists(key);
+
+        const mode = modeKeyToDef(key);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `mode-card ${mode.key === currentModeKey ? "active" : ""}`;
+
+        btn.innerHTML = `
+          <div class="mode-sign">${escapeHtml(mode.icon)}</div>
+          <div class="mode-text">
+            <strong>${escapeHtml(mode.title)}</strong>
+            <span>${escapeHtml(mode.sub)}</span>
+          </div>
+        `;
+
+        btn.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (mode.key === currentModeKey) return;
+
+          snapshotCurrentText();
+
+          currentModeKey = mode.key;
+          currentModeTitle = mode.title;
+          currentFieldKey = "image_roles";
+
+          markDirty(true);
+          renderAll();
+          publishLiveConfig("switch_mode", true);
+        });
+
+        box.appendChild(btn);
+      });
+    }
+
+    function renderCurrentMode() {
+      const mode = modeKeyToDef(currentModeKey);
+      currentModeTitle = mode.title;
+      $("#infoMode").textContent = mode.title;
+      $("#currentModeTip").textContent = `当前模式：${mode.title} · ${mode.desc}`;
+    }
+
+    function renderPromptTabs() {
+      const box = $("#promptTabs");
+      box.innerHTML = "";
+
+      FIELD_DEFS.forEach(([key, shortTitle]) => {
+        const btn = document.createElement("button");
+        btn.className = `prompt-tab ${key === currentFieldKey ? "active" : ""}`;
+        btn.textContent = shortTitle;
+        btn.onclick = () => {
+          snapshotCurrentText();
+          currentFieldKey = key;
+          renderPromptEditor();
+          publishLiveConfig("switch_field", false);
+        };
+        box.appendChild(btn);
+      });
+    }
+
+    function renderPromptEditor() {
+      const def = FIELD_DEFS.find(([key]) => key === currentFieldKey) || FIELD_DEFS[0];
+      const [fieldKey, shortTitle, fullTitle] = def;
+      const data = currentModeConfig();
+
+      $("#fieldTitle").textContent = fullTitle || shortTitle;
+      $("#fieldName").textContent = fieldKey;
+      $("#promptText").value = data[fieldKey] || "";
+      $("#charCount").textContent = `${($("#promptText").value || "").length} 字符`;
+
+      $$(".prompt-tab").forEach((btn) => {
+        btn.classList.toggle("active", btn.textContent === shortTitle);
+      });
+    }
+
+    function currentPreviewUrls() {
+      const data = currentModeConfig();
+      if (!data.preview_urls || typeof data.preview_urls !== "object") {
+        data.preview_urls = {};
+      }
+      return data.preview_urls;
+    }
+
+    function previewPath(modeKey, view) {
+      const key = String(modeKey || "").trim();
+      const v = String(view || "").trim();
+
+      const modeData = configByMode[key] || {};
+      const fromMode =
+        modeData.preview_urls?.[v] ||
+        modeData.previewUrls?.[v] ||
+        "";
+
+      if (fromMode) return fromMode;
+
+      const fromTop =
+        appState.config?.preview_urls?.[key]?.[v] ||
+        appState.config?.previewUrls?.[key]?.[v] ||
+        "";
+
+      if (fromTop) return fromTop;
+
+      const base = String(appState.previewBaseUrl || PREVIEW_BASE_URL).replace(/\/+$/, "");
+      const ext = String(appState.previewExt || PREVIEW_EXT).replace(/^\./, "");
+
+      return `${base}/${key}/${v}.${ext}`;
+    }
+
+    function staticPreviewPath(modeKey, view) {
+      const base = String(appState.previewBaseUrl || PREVIEW_BASE_URL).replace(/\/+$/, "");
+      const ext = String(appState.previewExt || PREVIEW_EXT).replace(/^\./, "");
+      return `${base}/${modeKey}/${view}.${ext}`;
+    }
+
+    function previewUrl(modeKey, view) {
+      const url = previewPath(modeKey, view);
+      if (/^data:/i.test(url)) return url;
+      return `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+    }
+
+    function viewLabel(view) {
+      if (view === "front" || view === "variant_a" || view === "view_1") return "视图1 / 正面图";
+      if (view === "side") return "侧面图";
+      if (view === "back") return "背面图";
+      if (view === "variant_b" || view === "view_2") return "视图2 / 左侧45度图";
+      if (view === "variant_c" || view === "view_3") return "视图3 / 侧面图";
+      if (view === "variant_d" || view === "view_4") return "视图4 / 后侧45度图";
+      if (view === "variant_e" || view === "view_5") return "视图5 / 背面图";
+      if (view === "all") return "全部视图";
+      return view;
+    }
+
+    function statusText(status) {
+      const s = String(status || "").toLowerCase();
+      if (["success", "ok", "done"].includes(s)) return "成功";
+      if (["failed", "fail", "error"].includes(s)) return "报错";
+      if (["pending", "running"].includes(s)) return "生成中";
+      if (["missing", "unknown"].includes(s)) return "暂无";
+      return status || "未知";
+    }
+
+    function fallbackHtml(label, path) {
+      return `
+        <div class="placeholder">
+          <div>
+            ${escapeHtml(label)} 未找到<br>
+            可点击底部上传预览图<br>
+            <span>${escapeHtml(path)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function runtimeNormalizeStableText(value) {
+      return String(value ?? "")
+        .trim()
+        .replace(/\\/g, "/")
+        .replace(/\/+/g, "/")
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+    }
+
+    function runtimeSortMs(item) {
+      if (!item || typeof item !== "object") return 0;
+
+      const raw =
+        item.updated_at_ms ??
+        item.created_at_ms ??
+        item.finished_at_ms ??
+        item.updated_at ??
+        item.created_at ??
+        item.time_ms ??
+        item.time ??
+        0;
+
+      if (typeof raw === "number" && Number.isFinite(raw)) {
+        return raw > 10000000000 ? raw : raw * 1000;
+      }
+
+      const text = String(raw || "").trim();
+      if (!text) return 0;
+
+      if (/^\d+(\.\d+)?$/.test(text)) {
+        const n = Number(text);
+        return Number.isFinite(n) ? (n > 10000000000 ? n : n * 1000) : 0;
+      }
+
+      const parsed = Date.parse(text);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function runtimeVariantToView(value) {
+      const raw = String(value || "").trim().toLowerCase();
+      if (["view_1", "view1", "v1"].includes(raw)) return "view_1";
+      if (["view_2", "view2", "v2"].includes(raw)) return "view_2";
+      if (["view_3", "view3", "v3"].includes(raw)) return "view_3";
+      if (["view_4", "view4", "v4", "variant_d", "d"].includes(raw)) return "view_4";
+      if (["view_5", "view5", "v5", "variant_e", "e"].includes(raw)) return "view_5";
+      if (["front", "variant_a", "a", "single", "single_image", "result", "image"].includes(raw)) return "front";
+      if (["side", "variant_b", "b"].includes(raw)) return "side";
+      if (["back", "variant_c", "c"].includes(raw)) return "back";
+      if (raw.includes("视图1")) return "view_1";
+      if (raw.includes("视图2")) return "view_2";
+      if (raw.includes("视图3")) return "view_3";
+      if (raw.includes("视图4")) return "view_4";
+      if (raw.includes("视图5")) return "view_5";
+      if (raw.includes("方案d") || raw.includes("方案 d")) return "view_4";
+      if (raw.includes("方案e") || raw.includes("方案 e")) return "view_5";
+      if (raw.includes("正面") || raw.includes("方案a") || raw.includes("方案 a")) return "front";
+      if (raw.includes("侧面") || raw.includes("方案b") || raw.includes("方案 b")) return "side";
+      if (raw.includes("背面") || raw.includes("方案c") || raw.includes("方案 c")) return "back";
+      return "";
+    }
+
+    function runtimeViewAliases(view) {
+      if (view === "view_1") return ["view_1", "view1", "variant_a", "front", "a", "正面图", "视图1", "方案A"];
+      if (view === "view_2") return ["view_2", "view2", "variant_b", "front_left", "left_45", "b", "视图2", "左侧45度图", "方案B"];
+      if (view === "view_3") return ["view_3", "view3", "variant_c", "side", "c", "侧面图", "视图3", "方案C"];
+      if (view === "view_4") return ["view_4", "view4", "variant_d", "back_left", "rear_45", "d", "后侧45度图", "视图4", "方案D"];
+      if (view === "view_5") return ["view_5", "view5", "variant_e", "back", "e", "背面图", "视图5", "方案E"];
+      if (view === "front") return ["front", "variant_a", "a", "single", "single_image", "result", "image", "正面图", "单图结果", "方案A"];
+      if (view === "side") return ["side", "variant_b", "b", "侧面图", "方案B"];
+      if (view === "back") return ["back", "variant_c", "c", "背面图", "方案C"];
+      return [view];
+    }
+
+    function runtimeGroupNodeType(group) {
+      return runtimeNormalizeStableText(
+        group?.node_type ||
+        group?.output_strategy ||
+        group?.type ||
+        group?.node ||
+        group?.source ||
+        ""
+      );
+    }
+
+    function runtimeGroupSequence(group) {
+      const direct =
+        group?.sequence ??
+        group?.seq ??
+        group?.group_sequence ??
+        group?.group_index ??
+        group?.index ??
+        "";
+      if (direct !== "" && direct !== null && direct !== undefined) return String(direct).trim();
+
+      const source = String(group?.output_dir || group?.cache_key || group?.run_id || group?.key || "");
+      const m = source.match(/(?:output_|group_|seq_|sequence_)?(\d{1,8})(?!.*\d)/i);
+      return m ? m[1] : "";
+    }
+
+    function runtimeIsSingleImageGroup(group) {
+      if (!group || typeof group !== "object") return false;
+
+      const explicit = group.visible_views || group.visible_variants || group.visibleViews || group.visibleVariants;
+      if (Array.isArray(explicit) && explicit.length) {
+        const mapped = Array.from(new Set(explicit.map(runtimeVariantToView).filter(Boolean)));
+        if (mapped.length === 1) return true;
+        if (mapped.length > 1) return false;
+      }
+
+      const type = runtimeGroupNodeType(group);
+      if (
+        type.includes("single_image") ||
+        type.includes("single-image") ||
+        type.includes("normal_single_image") ||
+        type.includes("single output") ||
+        (type.includes("single") && !type.includes("video") && !type.includes("three"))
+      ) {
+        return true;
+      }
+
+      const strategy = String(group.output_strategy || group.strategy || "").toLowerCase();
+      if (strategy.includes("single_image") || strategy === "single" || strategy.includes("single-output")) return true;
+
+      const list = Array.isArray(group.items)
+        ? group.items
+        : Array.isArray(group.results)
+          ? group.results
+          : Array.isArray(group.outputs)
+            ? group.outputs
+            : Array.isArray(group.images)
+              ? group.images
+              : Array.isArray(group.data)
+                ? group.data
+                : null;
+
+      return Array.isArray(list) && list.length === 1;
+    }
+
+    function runtimeGroupViewKeys(group) {
+      const explicit = group?.visible_views || group?.visible_variants || group?.visibleViews || group?.visibleVariants;
+      if (Array.isArray(explicit) && explicit.length) {
+        const mapped = Array.from(new Set(explicit.map(runtimeVariantToView).filter(Boolean)));
+        if (mapped.length) return mapped;
+      }
+
+      if (runtimeIsSingleImageGroup(group)) return ["front"];
+
+      const type = runtimeGroupNodeType(group);
+      const strategy = String(group?.output_strategy || group?.strategy || "").toLowerCase();
+      if (type.includes("five_view") || strategy.includes("five")) return ["view_1", "view_2", "view_3", "view_4", "view_5"];
+
+      return ["front", "side", "back"];
+    }
+
+    function runtimeViewsClass(count) {
+      if (count <= 1) return "one-view";
+      if (count === 2) return "two-views";
+      if (count === 4) return "four-views";
+      if (count >= 5) return "five-views";
+      return "three-views";
+    }
+
+    function runtimeCollectMediaKeysFromItem(item, keys) {
+      if (!item) return;
+      if (typeof item === "string") {
+        if (item.trim()) keys.push(item.trim());
+        return;
+      }
+      if (typeof item !== "object") return;
+
+      [
+        pickImage(item),
+        item.view_url,
+        item.public_url,
+        item.publicUrl,
+        item.local_path,
+        item.localImagePath,
+        item.filename,
+        item.name,
+        item.path,
+        item.fileUri
+      ].forEach((value) => {
+        const text = String(value || "").trim();
+        if (text) keys.push(text);
+      });
+
+      if (Array.isArray(item.media)) {
+        item.media.forEach((m) => runtimeCollectMediaKeysFromItem(m, keys));
+      }
+    }
+
+    function runtimeGroupMediaKey(group) {
+      const keys = [];
+      runtimeGroupViewKeys(group).forEach((view) => {
+        runtimeCollectMediaKeysFromItem(getViewItem(group, view), keys);
+      });
+
+      ["media", "items", "results", "outputs", "images", "data"].forEach((name) => {
+        const value = group?.[name];
+        if (Array.isArray(value)) value.forEach((item) => runtimeCollectMediaKeysFromItem(item, keys));
+      });
+
+      return Array.from(new Set(keys.map(runtimeNormalizeStableText).filter(Boolean))).sort().join("|");
+    }
+
+    function runtimeGroupStableKey(group) {
+      if (!group || typeof group !== "object") return "";
+
+      const type = runtimeGroupNodeType(group);
+      const sequence = runtimeNormalizeStableText(runtimeGroupSequence(group));
+      const outputDir = runtimeNormalizeStableText(group.output_dir || group.outputRoot || group.output_root || "");
+      const mediaKey = runtimeGroupMediaKey(group);
+      const runId = runtimeNormalizeStableText(group.run_id || group.cache_key || group.key || group.id || "");
+
+      // 自动化最近生成最容易重复：同输出目录 + 同序号 + 同节点类型，只保留最新完整记录。
+      if (outputDir && sequence) return `out:${type}:${sequence}:${outputDir}`;
+
+      // 没有序号时，同一输出目录也只保留最新一条，避免前端重复显示影子记录。
+      if (outputDir) return `out:${type}:${outputDir}:${mediaKey || runId}`;
+
+      // 手动生成或单图没有 output_dir 时，用媒体路径/URL 去重。
+      if (mediaKey) return `media:${type}:${sequence}:${mediaKey}`;
+
+      // 兜底使用后端 key。
+      if (runId) return `run:${runId}`;
+
+      return `fallback:${type}:${sequence}:${runtimeSortMs(group)}`;
+    }
+
+    function dedupeRuntimeGroups(groups) {
+      const rows = Array.isArray(groups) ? groups.filter((x) => x && typeof x === "object") : [];
+      const sorted = rows.slice().sort((a, b) => runtimeSortMs(b) - runtimeSortMs(a));
+
+      const primarySeen = new Set();
+      const primary = [];
+      sorted.forEach((group, index) => {
+        const key = runtimeGroupStableKey(group) || `fallback-index:${index}`;
+        if (primarySeen.has(key)) return;
+        primarySeen.add(key);
+        primary.push(group);
+      });
+
+      const TEN_MIN_MS = 10 * 60 * 1000;
+      const confirmed = new Map();
+
+      primary.forEach((group) => {
+        const sequence = runtimeNormalizeStableText(runtimeGroupSequence(group));
+        const type = runtimeGroupNodeType(group);
+        const outputDir = runtimeNormalizeStableText(group.output_dir || group.outputRoot || group.output_root || "");
+        const ts = runtimeSortMs(group);
+        if (!sequence || !type || !outputDir) return;
+        const key = `${sequence}|${type}`;
+        if (!confirmed.has(key) || ts > confirmed.get(key)) confirmed.set(key, ts);
+      });
+
+      return primary.filter((group) => {
+        const sequence = runtimeNormalizeStableText(runtimeGroupSequence(group));
+        const type = runtimeGroupNodeType(group);
+        const outputDir = runtimeNormalizeStableText(group.output_dir || group.outputRoot || group.output_root || "");
+        const ts = runtimeSortMs(group);
+
+        if (sequence && type && !outputDir) {
+          const fullTs = confirmed.get(`${sequence}|${type}`);
+          if (fullTs && Math.abs(fullTs - ts) <= TEN_MIN_MS) return false;
+        }
+        return true;
+      });
+    }
+
+    function getGroupsFromRuntime(data) {
+      if (!data || typeof data !== "object") return [];
+
+      const groups =
+        data.groups ||
+        data.results_groups ||
+        data.results ||
+        data.data?.groups ||
+        data.data?.results_groups ||
+        data.runtime?.groups ||
+        data.latest_groups;
+
+      if (Array.isArray(groups)) return dedupeRuntimeGroups(groups);
+
+      const latest = data.latest || data.data?.latest || data.runtime?.latest;
+      if (latest && typeof latest === "object") return dedupeRuntimeGroups([latest]);
+
+      if (data.views && typeof data.views === "object") return dedupeRuntimeGroups([data]);
+
+      return [];
+    }
+
+    function groupBelongsToCurrentMode(group) {
+      const mode = String(
+        group?.mode_actual ||
+        group?.mode_key ||
+        group?.mode ||
+        group?.key ||
+        ""
+      );
+      if (!mode) return true;
+      return mode === currentModeKey || mode === currentModeTitle || mode === modeKeyToTitle(currentModeKey);
+    }
+
+    function latestCurrentModeGroup() {
+      const groups = getGroupsFromRuntime(appState.runtime).filter(groupBelongsToCurrentMode);
+      return groups[0] || null;
+    }
+
+    function pickImage(item) {
+      if (!item || typeof item !== "object") return "";
+      return (
+        item.image ||
+        item.url ||
+        item.image_url ||
+        item.imageUrl ||
+        item.oss_url ||
+        item.ossUrl ||
+        item.fileUri ||
+        item.public_url ||
+        item.publicUrl ||
+        item.preview_url ||
+        item.previewUrl ||
+        item.data_url ||
+        item.dataUrl ||
+        ""
+      );
+    }
+
+    function normalizeItem(item) {
+      if (!item) return { status: "missing", image: "", error: "" };
+      if (typeof item === "string") return { status: "success", image: item, error: "" };
+      if (typeof item !== "object") return { status: "unknown", image: "", error: String(item) };
+
+      const image = pickImage(item);
+      const error = item.error || item.err || item.message || item.reason || "";
+      const status = item.status || item.state || (error ? "failed" : image ? "success" : "missing");
+
+      return {
+        ...item,
+        status,
+        image,
+        error
+      };
+    }
+
+    function getViewItem(group, view) {
+      if (!group || typeof group !== "object") return null;
+
+      const aliases = runtimeViewAliases(view);
+
+      if (group.views && typeof group.views === "object") {
+        for (const key of aliases) {
+          if (group.views[key]) return group.views[key];
+        }
+        return null;
+      }
+
+      for (const key of aliases) {
+        if (group[key]) return group[key];
+      }
+
+      if (group.images && typeof group.images === "object" && !Array.isArray(group.images)) {
+        for (const key of aliases) {
+          if (group.images[key]) return group.images[key];
+        }
+        return null;
+      }
+
+      const list =
+        group.items ||
+        group.results ||
+        group.outputs ||
+        group.images ||
+        group.data ||
+        [];
+
+      if (Array.isArray(list)) {
+        if (runtimeIsSingleImageGroup(group)) {
+          return view === "front" ? (list[0] || null) : null;
+        }
+
+        const byView = list.find((item) => {
+          const raw = String(item?.view || item?.name || item?.label || item?.type || item?.slot || item?.filename || "").toLowerCase();
+          return aliases.some((alias) => {
+            const a = String(alias || "").toLowerCase();
+            return a && raw.includes(a);
+          });
+        });
+        if (byView) return byView;
+
+        const indexMap = { front: 0, side: 1, back: 2, view_1: 0, view_2: 1, view_3: 2, view_4: 3, view_5: 4 };
+        return list[indexMap[view]] || null;
+      }
+
+      return null;
+    }
+
+    function setTemplateImage(view) {
+      const img = document.querySelector(`[data-template-img="${view}"]`);
+      if (!img) return;
+
+      const card = img.closest(".template-card");
+      const labelEl = card.querySelector(".card-label");
+      const pill = card.querySelector(`[data-pill="${view}"]`);
+      const liveGroup = latestCurrentModeGroup();
+      const liveItem = normalizeItem(getViewItem(liveGroup, view));
+      const liveImage = pickImage(liveItem);
+
+      const urls = currentPreviewUrls();
+      const ossUrl = urls[view] || "";
+      const staticPath = staticPreviewPath(currentModeKey, view);
+
+      card.classList.toggle("has-live", !!liveImage);
+      card.classList.toggle("has-oss", !!ossUrl && !liveImage);
+
+      if (pill) {
+        pill.textContent = liveImage ? "实时结果" : ossUrl ? "OSS预览" : "默认预览";
+      }
+
+      labelEl.textContent = `${viewLabel(view)}${liveImage ? " · 最近生成" : ossUrl ? " · OSS" : ""}`;
+
+      img.onerror = () => {
+        img.style.display = "none";
+        const old = card.querySelector(".placeholder");
+        if (old) old.remove();
+        card.insertAdjacentHTML("beforeend", fallbackHtml(viewLabel(view), ossUrl || staticPath));
+      };
+
+      img.onload = () => {
+        img.style.display = "block";
+        const old = card.querySelector(".placeholder");
+        if (old) old.remove();
+      };
+
+      img.src = liveImage || previewUrl(currentModeKey, view);
+
+      card.onclick = () => {
+        if (liveImage) {
+          openResultModal({
+            group: liveGroup,
+            view,
+            item: liveItem,
+            isTemplate: false
+          });
+          return;
+        }
+
+        if (ossUrl) {
+          openResultModal({
+            group: {
+              labels_prefix: currentModeTitle,
+              mode_display: currentModeTitle,
+              mode_actual: currentModeKey,
+              source: "oss_preview"
+            },
+            view,
+            item: {
+              status: "success",
+              image: ossUrl,
+              info: ossUrl,
+              from_oss_preview: true
+            },
+            isTemplate: true
+          });
+          return;
+        }
+
+        if (img.style.display !== "none") {
+          openResultModal({
+            group: {
+              labels_prefix: currentModeTitle,
+              mode_display: currentModeTitle,
+              mode_actual: currentModeKey,
+              model: $("#infoModel").textContent,
+              image_size: $("#infoSize").textContent,
+              aspect_ratio: $("#infoRatio").textContent
+            },
+            view,
+            item: {
+              status: "success",
+              image: img.src,
+              info: staticPath,
+              from_template: true
+            },
+            isTemplate: true
+          });
+        }
+      };
+    }
+
+    function renderTemplatePreview() {
+      ["front", "side", "back"].forEach(setTemplateImage);
+    }
+
+    function renderRuntime() {
+      const grid = $("#runtimeGrid");
+      const allGroups = getGroupsFromRuntime(appState.runtime);
+      // “最近生成”显示全部节点/全部模式，并在前端再次去重，避免影子记录重复出现。
+      let groups = allGroups.slice();
+
+      if (appState.previewMode === "failed") {
+        groups = groups
+          .map((group) => {
+            const hasFailed = runtimeGroupViewKeys(group).some((view) => {
+              const item = normalizeItem(getViewItem(group, view));
+              const s = String(item.status || "").toLowerCase();
+              return ["failed", "fail", "error", "missing"].includes(s) || item.error;
+            });
+            return hasFailed ? group : null;
+          })
+          .filter(Boolean);
+      }
+
+      if (!groups.length) {
+        grid.innerHTML = `
+          <div class="placeholder">
+            ${appState.previewMode === "failed" ? "暂无报错结果" : "暂无最近生成结果"}<br>
+            点击「刷新结果」读取 ComfyUI 运行结果。
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = groups.map((group, groupIndex) => {
+        const title =
+          group.title ||
+          group.template_display ||
+          group.labels_prefix ||
+          group.mode_display ||
+          group.mode_actual ||
+          group.mode ||
+          group.node_type ||
+          currentModeTitle;
+
+        const updated = group.updated_at_ms
+          ? new Date(Number(group.updated_at_ms)).toLocaleString()
+          : (group.created_at || (group.updated_at ? new Date((Number(group.updated_at) > 10000000000 ? Number(group.updated_at) : Number(group.updated_at) * 1000)).toLocaleString() : ""));
+        const sub = [
+          updated || group.time || "",
+          group.output_strategy || group.node_type || "",
+          group.model ? `model: ${group.model}` : "",
+          group.cache_key ? `cache_key: ${group.cache_key}` : "",
+          group.run_id ? `run_id: ${group.run_id}` : ""
+        ].filter(Boolean).join(" · ");
+
+        const viewKeys = runtimeGroupViewKeys(group);
+        const viewsHtml = viewKeys.map((view) => {
+          const raw = getViewItem(group, view);
+          const item = normalizeItem(raw);
+          const image = pickImage(item);
+          const status = String(item.status || "missing").toLowerCase();
+          const failed = ["failed", "fail", "error"].includes(status) || item.error;
+          const pending = ["pending", "running"].includes(status);
+          const missing = !image && !failed && !pending;
+          const stateClass = failed ? "failed" : pending ? "pending" : missing ? "missing" : "success";
+          const label = item.label || (runtimeIsSingleImageGroup(group) && (view === "front" || view === "variant_a" || view === "view_1") ? "单图结果" : viewLabel(view));
+          const meta = [
+            statusText(item.status),
+            item.seed ? `seed ${item.seed}` : "",
+            item.attempt ? `attempt ${item.attempt}${item.max_retry ? "/" + item.max_retry : ""}` : ""
+          ].filter(Boolean).join(" · ");
+
+          const errorHtml = failed
+            ? `<div class="runtime-error">${escapeHtml(item.error || item.message || "生成失败")}</div>`
+            : "";
+
+          const imageHtml = image
+            ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(label)}" loading="lazy">`
+            : `<div class="placeholder">${label}<br>${failed ? "生成失败，可重抽" : "等待生成结果"}</div>`;
+
+          return `
+            <div
+              class="runtime-view ${stateClass}"
+              data-group-index="${groupIndex}"
+              data-view="${view}"
+            >
+              <div class="runtime-badge">${label}</div>
+              ${imageHtml}
+              <div class="runtime-view-meta">
+                <div>${escapeHtml(meta || "暂无状态")}</div>
+                ${errorHtml}
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <section class="runtime-group" data-group-index="${groupIndex}">
+            <div class="runtime-head">
+              <div class="runtime-title">
+                <strong>${escapeHtml(title)}</strong>
+                <span>${escapeHtml(sub || "最近生成结果")}</span>
+              </div>
+              <div class="runtime-actions">
+                <button class="btn small" data-action="retry-group" data-group-index="${groupIndex}">重跑本组</button>
+              </div>
+            </div>
+            <div class="runtime-views ${runtimeViewsClass(viewKeys.length)}">${viewsHtml}</div>
+          </section>
+        `;
+      }).join("");
+
+      $$(".runtime-view", grid).forEach((card) => {
+        card.onclick = () => {
+          const groupIndex = Number(card.dataset.groupIndex || 0);
+          const view = card.dataset.view;
+          const group = groups[groupIndex];
+          const item = getViewItem(group, view);
+          openResultModal({ group, view, item, isTemplate: false });
+        };
+      });
+
+      $$('[data-action="retry-group"]', grid).forEach((btn) => {
+        btn.onclick = (event) => {
+          event.stopPropagation();
+          const groupIndex = Number(btn.dataset.groupIndex || 0);
+          const group = groups[groupIndex];
+          sendRetryCommand({ group, view: "all", scope: "group" });
+        };
+      });
+    }
+
+    function renderPreview() {
+      const templateGrid = $("#templateGrid");
+      const runtimeGrid = $("#runtimeGrid");
+
+      if (appState.previewMode === "template") {
+        templateGrid.style.display = "grid";
+        runtimeGrid.style.display = "none";
+        renderTemplatePreview();
+      } else {
+        templateGrid.style.display = "none";
+        runtimeGrid.style.display = "grid";
+        renderRuntime();
+      }
+
+      $$(".preview-switch button").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.previewMode === appState.previewMode);
+      });
+    }
+
+    async function refreshRuntime() {
+      $("#runtimePollState").textContent = "读取中...";
+
+      for (const route of RUNTIME_GET_ROUTES) {
+        try {
+          const res = await fetch(route, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+          appState.runtime = await res.json();
+          const count = Array.isArray(appState.runtime.groups) ? appState.runtime.groups.length : getGroupsFromRuntime(appState.runtime).length;
+          $("#runtimePollState").textContent = count ? `已读取 ${count} 组` : "已读取";
+          renderPreview();
+          maybeAutoRetryFailed();
+          return true;
+        } catch (error) {
+          console.warn("runtime failed:", route, error);
+        }
+      }
+
+      $("#runtimePollState").textContent = "读取失败";
+      appState.runtime = { groups: [] };
+      renderPreview();
+      return false;
+    }
+
+    async function clearRuntime() {
+      for (const route of RUNTIME_CLEAR_ROUTES) {
+        try {
+          const res = await fetch(route, { method: "POST" });
+          if (res.ok) break;
+        } catch {}
+      }
+
+      appState.runtime = { groups: [] };
+      $("#runtimePollState").textContent = "已清空";
+      renderPreview();
+      toast("已清空预览结果");
+    }
+
+    function sendCommand(command) {
+      const payload = {
+        source: "banana_prompt_editor",
+        channel: COMMAND_CHANNEL,
+        created_at: Date.now(),
+        ...command
+      };
+
+      try {
+        const bc = new BroadcastChannel(COMMAND_CHANNEL);
+        bc.postMessage(payload);
+        setTimeout(() => bc.close(), 500);
+      } catch {}
+
+      try {
+        localStorage.setItem(COMMAND_STORAGE_KEY, JSON.stringify(payload));
+      } catch {}
+
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(payload, "*");
+        }
+      } catch {}
+
+      try {
+        window.parent?.postMessage(payload, "*");
+      } catch {}
+
+      setSyncState("已广播");
+    }
+
+    function publishLiveConfig(reason = "edit", debouncedSave = false) {
+      snapshotCurrentText();
+
+      const payload = buildExportPayload({ skipSnapshot: true });
+
+      const command = {
+        type: "config_sync",
+        action: "config_sync",
+        reason,
+        source: "banana_prompt_editor",
+        created_at: Date.now(),
+        current_mode_key: currentModeKey,
+        current_mode_title: currentModeTitle,
+        current_field_key: currentFieldKey,
+        mode_options: payload.mode_options,
+        mode_meta: payload.mode_meta,
+        preview_urls: payload.preview_urls,
+        config: payload,
+        prompts: payload.modes,
+        current_mode_config: currentModeConfig()
+      };
+
+      try {
+        localStorage.setItem(LIVE_CONFIG_KEY, JSON.stringify(command));
+        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn("[banana editor] localStorage sync failed:", error);
+      }
+
+      sendCommand(command);
+
+      setSyncState("已实时同步");
+
+      clearTimeout(liveSyncTimer);
+      liveSyncTimer = setTimeout(() => {
+        setSyncState("已连接");
+      }, 1200);
+
+      if (debouncedSave) {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+          postJsonFirst(CONFIG_POST_ROUTES, payload)
+            .then(({ route }) => {
+              setStatus(`配置状态：已自动同步到 ${route}`);
+              markDirty(false);
+            })
+            .catch(() => {
+              setStatus("配置状态：已实时同步到节点，后端保存等待手动保存");
+            });
+        }, 900);
+      }
+    }
+
+    function sendRetryCommand({ group = null, view = "all", scope = "single" } = {}) {
+      const mode = modeKeyToDef(currentModeKey);
+
+      sendCommand({
+        type: "retry",
+        action: scope === "all" ? "retry_all" : view === "all" ? "retry_group" : "retry_one",
+        mode_key: currentModeKey,
+        mode_title: mode.title,
+        view,
+        view_label: viewLabel(view),
+        group: group || null,
+        config: currentModeConfig(),
+        full_config: buildExportPayload({ skipSnapshot: false }),
+        prompt: composeFullPrompt()
+      });
+
+      toast("已发送重跑命令，请保持 ComfyUI 主页面打开");
+    }
+
+    function maybeAutoRetryFailed() {
+      if (!appState.autoRetry) return;
+
+      const groups = getGroupsFromRuntime(appState.runtime).filter(groupBelongsToCurrentMode);
+      const failedViews = [];
+
+      groups.forEach((group, groupIndex) => {
+        runtimeGroupViewKeys(group).forEach((view) => {
+          const item = normalizeItem(getViewItem(group, view));
+          const status = String(item.status || "").toLowerCase();
+          if (["failed", "fail", "error"].includes(status) || item.error) {
+            failedViews.push({ group, groupIndex, view, item });
+          }
+        });
+      });
+
+      if (!failedViews.length) return;
+
+      const key = `${currentModeKey}:${failedViews.map((x) => `${x.groupIndex}-${x.view}`).join(",")}`;
+      const now = Date.now();
+      const last = appState.lastRetryAt[key] || 0;
+
+      if (now - last < appState.retryCooldownMs) return;
+
+      appState.lastRetryAt[key] = now;
+
+      sendCommand({
+        type: "retry",
+        action: "retry_failed",
+        mode_key: currentModeKey,
+        mode_title: currentModeTitle,
+        failed_views: failedViews.map((x) => ({
+          groupIndex: x.groupIndex,
+          view: x.view,
+          item: x.item
+        })),
+        config: currentModeConfig(),
+        full_config: buildExportPayload({ skipSnapshot: false })
+      });
+    }
+
+    function composeFullPrompt() {
+      const data = currentModeConfig();
+
+      return [
+        `模式：${currentModeTitle}`,
+        `模式 key：${currentModeKey}`,
+        "",
+        `参考图角色说明：${data.image_roles || ""}`,
+        "",
+        `全局任务：${data.global_prompt || ""}`,
+        "",
+        `正面提示词：${data.front_prompt || ""}`,
+        "",
+        `侧面提示词：${data.side_prompt || ""}`,
+        "",
+        `背面提示词：${data.back_prompt || ""}`,
+        "",
+        `一致性要求：${data.consistency_prompt || ""}`,
+        "",
+        `反向约束：${data.negative_prompt || ""}`
+      ].join("\n");
+    }
+
+    function buildExportPayload(options = {}) {
+      if (!options.skipSnapshot) {
+        snapshotCurrentText();
+      }
+
+      const mode_options = {};
+      Object.entries(appState.modeOptions || {}).forEach(([title, key]) => {
+        const display = String(title || "").trim();
+        const modeKey = String(key || "").trim();
+        if (!display || !modeKey) return;
+        mode_options[display] = modeKey;
+      });
+
+      const modes = {};
+      const preview_urls = {};
+
+      Object.values(mode_options).forEach((key) => {
+        if (!key) return;
+
+        const modeData = configByMode[key] || createBlankPrompt(modeKeyToTitle(key));
+        if (!modeData.preview_urls || typeof modeData.preview_urls !== "object") {
+          modeData.preview_urls = {};
+        }
+
+        modes[key] = modeData;
+        preview_urls[key] = {
+          front: modeData.preview_urls.front || "",
+          side: modeData.preview_urls.side || "",
+          back: modeData.preview_urls.back || ""
+        };
+      });
+
+      return {
+        plugin_version: appState.pluginVersion || DEFAULT_PLUGIN_VERSION,
+        version: Date.now(),
+        description: "Banana 三视图前端可编辑提示词配置。支持实时同步节点、动态新增/删除模式、OSS 预览图上传、生成预览轮询、失败提示、单图重抽和报错自动重抽。",
+        updated_at: new Date().toISOString(),
+        preview_base_url: appState.previewBaseUrl || PREVIEW_BASE_URL,
+        preview_ext: appState.previewExt || PREVIEW_EXT,
+        background_url: PAGE_BACKGROUND_URL,
+        mode_options,
+        mode_meta: appState.modeMeta || {},
+        preview_urls,
+        modes,
+        prompts: {}
+      };
+    }
+
+    async function saveConfig() {
+      snapshotCurrentText();
+      const payload = buildExportPayload({ skipSnapshot: true });
+      publishLiveConfig("manual_save", false);
+
+      try {
+        setStatus("配置状态：正在保存到后端...");
+        const { route, json } = await postJsonFirst(CONFIG_POST_ROUTES, payload);
+        const savedConfig = json && json.config ? json.config : payload;
+
+        configByMode = normalizeConfig(savedConfig);
+        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(savedConfig));
+        localStorage.setItem(LIVE_CONFIG_KEY, JSON.stringify({
+          type: "config_sync",
+          config: savedConfig,
+          created_at: Date.now()
+        }));
+        setStatus(`配置状态：已保存到 ${route}`);
+        markDirty(false);
+        renderAll();
+        publishLiveConfig("saved", false);
+        toast("保存成功，节点将使用当前前端提示词与 OSS 预览图");
+      } catch {
+        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(payload));
+        downloadJson(payload, "banana_ecommerce_prompts.json");
+        setStatus("配置状态：后端保存接口不可用，已导出 JSON");
+        toast("已导出 JSON，里面包含 OSS 预览图 URL");
+      }
+    }
+
+    function resetCurrentMode() {
+      const title = modeKeyToTitle(currentModeKey);
+      const oldUrls = currentModeConfig().preview_urls || {};
+      configByMode[currentModeKey] = deepClone(DEFAULT_PROMPTS[currentModeKey] || createBlankPrompt(title));
+      configByMode[currentModeKey].preview_urls = oldUrls;
+
+      renderPromptEditor();
+      saveTextToState();
+      markDirty(true);
+      publishLiveConfig("reset_current_mode", true);
+      toast("当前模式已恢复默认，OSS 预览图已保留");
+    }
+
+    function clearLocalCache() {
+      localStorage.removeItem(LOCAL_CACHE_KEY);
+      localStorage.removeItem(LIVE_CONFIG_KEY);
+      setStatus("配置状态：本地缓存已清空");
+      toast("已清空本地缓存");
+    }
+
+    function copyText(text, message) {
+      navigator.clipboard?.writeText(text).then(
+        () => toast(message || "已复制"),
+        () => {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+          toast(message || "已复制");
+        }
+      );
+    }
+
+    function downloadJson(data, filename) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json;charset=utf-8"
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importConfigFile(file) {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        try {
+          const json = JSON.parse(String(reader.result || "{}"));
+          configByMode = normalizeConfig(json);
+          if (json.plugin_version) appState.pluginVersion = json.plugin_version;
+
+          ensureCurrentModeValid();
+          localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(json));
+          markDirty(true);
+          renderAll();
+          publishLiveConfig("import_config", true);
+          toast("配置已导入，OSS 预览图 URL 已同步");
+        } catch {
+          toast("导入失败：不是有效 JSON");
+        }
+      };
+
+      reader.readAsText(file, "utf-8");
+    }
+
+    function openModeModal(type = "add") {
+      appState.modeModalType = type;
+      const modal = $("#modeModal");
+      const def = modeKeyToDef(currentModeKey);
+
+      if (type === "edit") {
+        $("#modeModalTitle").textContent = "编辑当前模式";
+        $("#modeTitleInput").value = def.title;
+        $("#modeKeyInput").value = def.key;
+        $("#modeKeyInput").disabled = true;
+        $("#modeIconInput").value = def.icon;
+        $("#modeSubInput").value = def.sub;
+        $("#modeDescInput").value = def.desc;
+      } else {
+        $("#modeModalTitle").textContent = "新增模式";
+        $("#modeTitleInput").value = "";
+        $("#modeKeyInput").value = "";
+        $("#modeKeyInput").disabled = false;
+        $("#modeIconInput").value = "新";
+        $("#modeSubInput").value = "自定义模式";
+        $("#modeDescInput").value = "自定义三视图生成模式。";
+      }
+
+      modal.classList.add("show");
+    }
+
+    function closeModeModal() {
+      $("#modeModal").classList.remove("show");
+    }
+
+    function saveModeFromModal() {
+      const type = appState.modeModalType;
+      const title = String($("#modeTitleInput").value || "").trim();
+      const rawKey = String($("#modeKeyInput").value || "").trim();
+      const icon = String($("#modeIconInput").value || "").trim() || "新";
+      const sub = String($("#modeSubInput").value || "").trim() || "自定义模式";
+      const desc = String($("#modeDescInput").value || "").trim() || "自定义三视图生成模式。";
+
+      if (!title) {
+        toast("请填写模式名称");
+        return;
+      }
+
+      const key = type === "edit" ? currentModeKey : slugify(rawKey || title);
+
+      if (type !== "edit" && configByMode[key]) {
+        toast("模式 Key 已存在，请换一个");
+        return;
+      }
+
+      if (type === "edit") {
+        Object.keys(appState.modeOptions).forEach((display) => {
+          if (appState.modeOptions[display] === key && display !== title) {
+            delete appState.modeOptions[display];
+          }
+        });
+      }
+
+      appState.modeOptions[title] = key;
+      appState.modeMeta[key] = { title, icon, sub, desc };
+
+      if (!configByMode[key]) {
+        configByMode[key] = createBlankPrompt(title);
+      }
+
+      if (!configByMode[key].preview_urls) {
+        configByMode[key].preview_urls = {};
+      }
+
+      currentModeKey = key;
+      currentModeTitle = title;
+      currentFieldKey = "image_roles";
+
+      closeModeModal();
+      markDirty(true);
+      renderAll();
+      publishLiveConfig(type === "edit" ? "edit_mode" : "add_mode", true);
+      toast(type === "edit" ? "模式已更新" : "模式已新增，可直接上传 OSS 预览图");
+    }
+
+    function duplicateCurrentMode() {
+      const def = modeKeyToDef(currentModeKey);
+      const newTitle = `${def.title} 副本`;
+      const newKey = `${currentModeKey}_copy_${Date.now()}`;
+
+      appState.modeOptions[newTitle] = newKey;
+      appState.modeMeta[newKey] = {
+        ...deepClone(appState.modeMeta[currentModeKey] || {}),
+        title: newTitle,
+        icon: def.icon || "副",
+        sub: def.sub || "复制模式",
+        desc: def.desc || "复制出来的自定义模式。"
+      };
+      configByMode[newKey] = deepClone(currentModeConfig());
+      configByMode[newKey].preview_urls = { ...(currentModeConfig().preview_urls || {}) };
+
+      currentModeKey = newKey;
+      currentModeTitle = newTitle;
+      currentFieldKey = "image_roles";
+
+      markDirty(true);
+      renderAll();
+      publishLiveConfig("duplicate_mode", true);
+      toast("已复制当前模式，预览图 URL 已一起复制");
+    }
+
+    function deleteCurrentMode() {
+      const keys = Object.values(appState.modeOptions);
+      if (keys.length <= 1) {
+        toast("至少保留一个模式");
+        return;
+      }
+
+      const def = modeKeyToDef(currentModeKey);
+      if (!confirm(`确定删除「${def.title}」吗？`)) return;
+
+      Object.keys(appState.modeOptions).forEach((title) => {
+        if (appState.modeOptions[title] === currentModeKey) {
+          delete appState.modeOptions[title];
+        }
+      });
+      delete appState.modeMeta[currentModeKey];
+      delete configByMode[currentModeKey];
+
+      currentModeKey = Object.values(appState.modeOptions)[0];
+      currentModeTitle = modeKeyToTitle(currentModeKey);
+      currentFieldKey = "image_roles";
+
+      markDirty(true);
+      renderAll();
+      publishLiveConfig("delete_mode", true);
+      toast("模式已删除");
+    }
+
+    function makeApiUrl(base, route) {
+      const b = String(base || "").replace(/\/+$/, "");
+      const r = String(route || "");
+      if (!b) return r;
+      if (r.startsWith("/api/") && b.endsWith("/api")) {
+        return b + r.slice(4);
+      }
+      return b + r;
+    }
+
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 25000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        return await fetch(url, {
+          ...options,
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function extractNested(obj, keys) {
+      if (!obj || typeof obj !== "object") return "";
+
+      for (const key of keys) {
+        if (obj[key]) return obj[key];
+      }
+
+      const candidates = [obj.data, obj.result, obj.file, obj.upload, obj.oss, obj.payload];
+      for (const item of candidates) {
+        if (!item || typeof item !== "object") continue;
+        for (const key of keys) {
+          if (item[key]) return item[key];
+        }
+      }
+
+      return "";
+    }
+
+    function extractPublicUrl(data) {
+      return extractNested(data, [
+        "url",
+        "oss_url",
+        "ossUrl",
+        "public_url",
+        "publicUrl",
+        "file_url",
+        "fileUrl",
+        "download_url",
+        "downloadUrl",
+        "preview_url",
+        "previewUrl",
+        "cdn_url",
+        "cdnUrl",
+        "object_url",
+        "objectUrl"
+      ]);
+    }
+
+    function extractUploadUrl(data) {
+      return extractNested(data, [
+        "upload_url",
+        "uploadUrl",
+        "presigned_url",
+        "presignedUrl",
+        "put_url",
+        "putUrl",
+        "signed_url",
+        "signedUrl"
+      ]);
+    }
+
+    function extractPostUrl(data) {
+      return extractNested(data, [
+        "post_url",
+        "postUrl",
+        "host",
+        "url_for_post",
+        "urlForPost"
+      ]);
+    }
+
+    function extractFields(data) {
+      if (!data || typeof data !== "object") return null;
+      return data.fields || data.form || data.formData || data.data?.fields || data.data?.form || null;
+    }
+
+    function publicFromUploadUrl(uploadUrl) {
+      if (!uploadUrl) return "";
+      return String(uploadUrl).split("?")[0];
+    }
+
+    async function uploadBySimpleRoute(file, view) {
+      for (const base of API_BASE_CANDIDATES) {
+        for (const route of SIMPLE_UPLOAD_ROUTES) {
+          const url = makeApiUrl(base, route);
+
+          try {
+            const form = new FormData();
+            form.append("file", file);
+            form.append("mode_key", currentModeKey);
+            form.append("mode_title", currentModeTitle);
+            form.append("view", view);
+            form.append("folder", `plugins2/previews/${currentModeKey}`);
+
+            const resp = await fetchWithTimeout(url, {
+              method: "POST",
+              body: form
+            });
+
+            if (!resp.ok) continue;
+
+            const data = await resp.json().catch(() => ({}));
+            const publicUrl = extractPublicUrl(data);
+
+            if (publicUrl) {
+              return publicUrl;
+            }
+          } catch (error) {
+            console.warn("simple upload failed:", url, error);
+          }
+        }
+      }
+
+      return "";
+    }
+
+    async function uploadByPresign(file, view) {
+      for (const base of API_BASE_CANDIDATES) {
+        for (const route of PRESIGN_ROUTES) {
+          const url = makeApiUrl(base, route);
+
+          try {
+            const ext = file.name.includes(".") ? file.name.split(".").pop() : "png";
+            const filename = `${currentModeKey}_${view}_${Date.now()}.${ext}`;
+            const objectKey = `plugins2/previews/${currentModeKey}/${filename}`;
+
+            const resp = await fetchWithTimeout(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                filename,
+                file_name: filename,
+                name: filename,
+                key: objectKey,
+                object_key: objectKey,
+                path: objectKey,
+                content_type: file.type || "image/png",
+                contentType: file.type || "image/png",
+                mime_type: file.type || "image/png",
+                size: file.size,
+                mode_key: currentModeKey,
+                mode_title: currentModeTitle,
+                view,
+                folder: `plugins2/previews/${currentModeKey}`
+              })
+            });
+
+            if (!resp.ok) continue;
+
+            const data = await resp.json().catch(() => ({}));
+            const uploadUrl = extractUploadUrl(data);
+            const postUrl = extractPostUrl(data);
+            const fields = extractFields(data);
+
+            let publicUrl = extractPublicUrl(data);
+
+            if (uploadUrl) {
+              const putResp = await fetchWithTimeout(uploadUrl, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": file.type || "application/octet-stream"
+                },
+                body: file
+              }, 60000);
+
+              if (!putResp.ok) {
+                throw new Error(`PUT OSS failed HTTP ${putResp.status}`);
+              }
+
+              return publicUrl || publicFromUploadUrl(uploadUrl);
+            }
+
+            if (postUrl && fields && typeof fields === "object") {
+              const form = new FormData();
+
+              Object.entries(fields).forEach(([k, v]) => {
+                form.append(k, v);
+              });
+              form.append("file", file);
+
+              const postResp = await fetchWithTimeout(postUrl, {
+                method: "POST",
+                body: form
+              }, 60000);
+
+              if (!postResp.ok) {
+                throw new Error(`POST OSS failed HTTP ${postResp.status}`);
+              }
+
+              return publicUrl || `${String(postUrl).replace(/\/+$/, "")}/${fields.key || objectKey}`;
+            }
+
+            if (publicUrl) {
+              return publicUrl;
+            }
+          } catch (error) {
+            console.warn("presign upload failed:", url, error);
+          }
+        }
+      }
+
+      return "";
+    }
+
+    async function uploadPreviewFile(file, view) {
+      const simpleUrl = await uploadBySimpleRoute(file, view);
+      if (simpleUrl) return simpleUrl;
+
+      const presignUrl = await uploadByPresign(file, view);
+      if (presignUrl) return presignUrl;
+
+      throw new Error("上传失败：没有可用的上传接口或未返回 URL");
+    }
+
+    function savePreviewUrl(view, url) {
+      const data = currentModeConfig();
+      if (!data.preview_urls || typeof data.preview_urls !== "object") {
+        data.preview_urls = {};
+      }
+
+      data.preview_urls[view] = url;
+
+      markDirty(true);
+      renderPreview();
+      publishLiveConfig("upload_preview", true);
+      toast(`${viewLabel(view)} OSS 预览图已更新`);
+    }
+
+    async function handlePreviewUpload(file, view) {
+      if (!file || !view) return;
+
+      try {
+        toast(`正在上传 ${viewLabel(view)} 到 OSS...`);
+        setSyncState("上传中");
+        const url = await uploadPreviewFile(file, view);
+        savePreviewUrl(view, url);
+        setSyncState("已连接");
+      } catch (error) {
+        console.error(error);
+        setSyncState("上传失败");
+        toast(error.message || "上传失败");
+      }
+    }
+
+    function removePreviewUrl(view) {
+      const data = currentModeConfig();
+      if (!data.preview_urls) data.preview_urls = {};
+      data.preview_urls[view] = "";
+
+      markDirty(true);
+      renderPreview();
+      publishLiveConfig("remove_preview", true);
+      toast(`${viewLabel(view)} 预览图 URL 已移除`);
+    }
+
+    function openResultModal({ group, view, item, isTemplate = false }) {
+      const normalized = normalizeItem(item);
+      const image = pickImage(normalized);
+      const failed = ["failed", "fail", "error"].includes(String(normalized.status || "").toLowerCase()) || normalized.error;
+
+      appState.currentModal = { group, view, item: normalized, isTemplate };
+      appState.currentModalImageUrl = image || "";
+
+      $("#resultModalTitle").textContent = `${currentModeTitle} · ${viewLabel(view)}`;
+      $("#resultModalSub").textContent = normalized.from_oss_preview
+        ? "当前为你上传到 OSS 的预览图。"
+        : isTemplate
+          ? "当前为云端模板预览图。"
+          : "当前为最近生成结果，可单图重抽或重跑全部。";
+
+      const img = $("#resultModalImg");
+      const wrap = $("#resultImageWrap");
+
+      if (image) {
+        img.style.display = "block";
+        img.src = image;
+        wrap.querySelector(".placeholder")?.remove();
+      } else {
+        img.style.display = "none";
+        wrap.querySelector(".placeholder")?.remove();
+        wrap.insertAdjacentHTML("beforeend", `
+          <div class="placeholder">
+            ${viewLabel(view)} 暂无图片<br>
+            ${failed ? "该视图需要重新生成" : "等待生成结果"}
+          </div>
+        `);
+      }
+
+      $("#resultMetaGrid").innerHTML = `
+        <div><b>视图：</b>${escapeHtml(viewLabel(view))}</div>
+        <div><b>状态：</b>${escapeHtml(statusText(normalized.status))}</div>
+        <div><b>seed：</b>${escapeHtml(normalized.seed || "-")}</div>
+        <div><b>attempt：</b>${escapeHtml(normalized.attempt || "-")}${normalized.max_retry ? `/${escapeHtml(normalized.max_retry)}` : ""}</div>
+        <div><b>来源：</b>${normalized.from_oss_preview ? "OSS 上传预览" : isTemplate ? "云端模板预览" : (normalized.from_cache ? "缓存结果" : "最近生成结果")}</div>
+        <div><b>cache_key：</b>${escapeHtml(group?.cache_key || "-")}</div>
+      `;
+
+      const log = $("#resultLog");
+      log.classList.toggle("error", failed);
+      log.textContent =
+        normalized.error ||
+        normalized.info ||
+        normalized.message ||
+        normalized.reason ||
+        (image ? image : "暂无详细信息");
+
+      $("#retryCurrentBtn").style.display = isTemplate ? "none" : "inline-flex";
+      $("#retryAllFromModalBtn").style.display = isTemplate ? "none" : "inline-flex";
+
+      $("#resultModal").classList.add("show");
+    }
+
+    function closeResultModal() {
+      $("#resultModal").classList.remove("show");
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderFooter() {
+      $("#footerText").textContent = `Banana 三视图提示词编辑器 · OSS预览图 · 实时同步 · v${appState.pluginVersion || DEFAULT_PLUGIN_VERSION}`;
+    }
+
+    function renderAll() {
+      ensureCurrentModeValid();
+      renderModes();
+      renderCurrentMode();
+      renderPromptTabs();
+      renderPromptEditor();
+      renderPreview();
+      renderFooter();
+    }
+
+    function bindEvents() {
+      $("#promptText").addEventListener("input", () => {
+        currentModeConfig()[currentFieldKey] = $("#promptText").value;
+        $("#charCount").textContent = `${$("#promptText").value.length} 字符`;
+
+        try {
+          const payload = buildExportPayload({ skipSnapshot: true });
+          localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(payload));
+        } catch (error) {
+          console.warn("[banana editor] input cache failed:", error);
+        }
+
+        markDirty(true);
+        publishLiveConfig("input", true);
+      });
+
+      $("#saveBtn").onclick = saveConfig;
+
+      $("#exportBtn").onclick = () => {
+        snapshotCurrentText();
+        downloadJson(buildExportPayload({ skipSnapshot: true }), "banana_ecommerce_prompts.json");
+      };
+
+      $("#importBtn").onclick = () => $("#fileInput").click();
+
+      $("#fileInput").onchange = (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (file) importConfigFile(file);
+        event.target.value = "";
+      };
+
+      $("#resetModeBtn").onclick = resetCurrentMode;
+      $("#clearLocalBtn").onclick = clearLocalCache;
+      $("#addModeBtn").onclick = () => openModeModal("add");
+      $("#editModeBtn").onclick = () => openModeModal("edit");
+      $("#copyModeBtn").onclick = duplicateCurrentMode;
+      $("#deleteModeBtn").onclick = deleteCurrentMode;
+      $("#cancelModeBtn").onclick = closeModeModal;
+      $("#saveModeBtn").onclick = saveModeFromModal;
+
+      $("#modeModal").onclick = (event) => {
+        if (event.target === $("#modeModal")) closeModeModal();
+      };
+
+      $("#copyPromptBtn").onclick = () => {
+        snapshotCurrentText();
+        copyText(composeFullPrompt(), "已复制完整提示词");
+      };
+
+      $("#copyJsonBtn").onclick = () => {
+        snapshotCurrentText();
+        copyText(JSON.stringify({
+          mode: currentModeTitle,
+          key: currentModeKey,
+          meta: appState.modeMeta[currentModeKey],
+          preview_urls: currentModeConfig().preview_urls || {},
+          ...currentModeConfig()
+        }, null, 2), "已复制当前模式 JSON，包含 OSS 预览图 URL");
+      };
+
+      $("#downloadBtn").onclick = () => {
+        snapshotCurrentText();
+        downloadJson(buildExportPayload({ skipSnapshot: true }), "banana_ecommerce_prompts.json");
+      };
+
+      $("#copyCloudPathsBtn").onclick = () => {
+        const urls = currentPreviewUrls();
+        const text = ["front", "side", "back"].map((view) => {
+          return `${viewLabel(view)}: ${urls[view] || staticPreviewPath(currentModeKey, view)}`;
+        }).join("\n");
+        copyText(text, "已复制三张预览图路径");
+      };
+
+      $("#refreshRuntimeBtn").onclick = async () => {
+        appState.previewMode = "runtime";
+        renderPreview();
+        await refreshRuntime();
+        toast("已刷新最近生成结果");
+      };
+
+      $("#rerunAllBtn").onclick = () => {
+        sendRetryCommand({ view: "all", scope: "all" });
+      };
+
+      $("#clearRuntimeBtn").onclick = clearRuntime;
+
+      $("#autoRetryToggle").onchange = (event) => {
+        appState.autoRetry = Boolean(event.target.checked);
+        toast(appState.autoRetry ? "已开启报错自动重抽" : "已关闭报错自动重抽");
+      };
+
+      $$(".preview-switch button").forEach((btn) => {
+        btn.onclick = () => {
+          appState.previewMode = btn.dataset.previewMode || "template";
+          renderPreview();
+
+          if (appState.previewMode !== "template") {
+            refreshRuntime();
+          }
+        };
+      });
+
+      $$("[data-upload-view]").forEach((btn) => {
+        btn.onclick = (event) => {
+          event.stopPropagation();
+          appState.uploadTargetView = btn.dataset.uploadView;
+          $("#previewFileInput").click();
+        };
+      });
+
+      $$("[data-remove-view]").forEach((btn) => {
+        btn.onclick = (event) => {
+          event.stopPropagation();
+          removePreviewUrl(btn.dataset.removeView);
+        };
+      });
+
+      $("#previewFileInput").onchange = (event) => {
+        const file = event.target.files && event.target.files[0];
+        const view = appState.uploadTargetView;
+        event.target.value = "";
+        handlePreviewUpload(file, view);
+      };
+
+      $("#closeResultBtn").onclick = closeResultModal;
+
+      $("#resultModal").onclick = (event) => {
+        if (event.target === $("#resultModal")) closeResultModal();
+      };
+
+      $("#retryCurrentBtn").onclick = () => {
+        if (!appState.currentModal) return;
+        sendRetryCommand({
+          group: appState.currentModal.group,
+          view: appState.currentModal.view,
+          scope: "single"
+        });
+      };
+
+      $("#retryAllFromModalBtn").onclick = () => {
+        sendRetryCommand({ view: "all", scope: "all" });
+      };
+
+      $("#copyCurrentImageUrlBtn").onclick = () => {
+        if (!appState.currentModalImageUrl) {
+          toast("当前没有可复制的图片 URL");
+          return;
+        }
+        copyText(appState.currentModalImageUrl, "图片 URL 已复制");
+      };
+
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || typeof data !== "object") return;
+        if (data.type === "runtime_update" || data.action === "runtime_update") {
+          appState.runtime = data.runtime || data.payload || data;
+          renderPreview();
+        }
+      });
+    }
+
+    async function init() {
+      bindEvents();
+      renderAll();
+      await loadManifest();
+      await loadConfig();
+      await refreshRuntime();
+      setInterval(refreshRuntime, 5000);
+    }
+
+    init();
+  </script>
+</body>
+</html>

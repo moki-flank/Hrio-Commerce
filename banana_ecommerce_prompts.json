@@ -1,0 +1,149 @@
+{
+  "plugin_version": "7.10.0-winter-rhyme-history-clear",
+  "version": 18,
+  "description": "Banana 三视图前端可编辑提示词配置。支持实时同步节点、动态新增/删除模式、OSS 预览图上传、生成预览轮询、失败提示、单图重抽和报错自动重抽。",
+  "preview_base_url": "https://img.hrio.site/plugins2/previews",
+  "preview_ext": "png",
+  "background_url": "https://img.hrio.site/asset_1777135171627.jpg",
+  "mode_options": {
+    "服装迁移": "fashion_replace",
+    "服装穿戴": "model_tryon",
+    "动作迁移": "pose_transfer",
+    "印花面料迁移": "texture_pattern_transfer",
+    "单品三视图": "product_three_view",
+    "白底主图精修": "white_bg_refine"
+  },
+  "mode_meta": {
+    "fashion_replace": {
+      "title": "服装迁移",
+      "icon": "服",
+      "sub": "自定义模式",
+      "desc": "自定义三视图生成模式。"
+    },
+    "model_tryon": {
+      "title": "服装穿戴",
+      "icon": "服",
+      "sub": "自定义模式",
+      "desc": "自定义三视图生成模式。"
+    },
+    "pose_transfer": {
+      "title": "动作迁移",
+      "icon": "动",
+      "sub": "自定义模式",
+      "desc": "自定义三视图生成模式。"
+    },
+    "texture_pattern_transfer": {
+      "title": "印花面料迁移",
+      "icon": "印",
+      "sub": "自定义模式",
+      "desc": "自定义三视图生成模式。"
+    },
+    "product_three_view": {
+      "title": "单品三视图",
+      "icon": "单",
+      "sub": "自定义模式",
+      "desc": "自定义三视图生成模式。"
+    },
+    "white_bg_refine": {
+      "title": "白底主图精修",
+      "icon": "白",
+      "sub": "自定义模式",
+      "desc": "自定义三视图生成模式。"
+    }
+  },
+  "preview_urls": {
+    "model_tryon": {
+      "front": "",
+      "side": "",
+      "back": ""
+    },
+    "pose_transfer": {
+      "front": "",
+      "side": "",
+      "back": ""
+    },
+    "fashion_replace": {
+      "front": "",
+      "side": "",
+      "back": ""
+    },
+    "white_bg_refine": {
+      "front": "",
+      "side": "",
+      "back": ""
+    },
+    "product_three_view": {
+      "front": "",
+      "side": "",
+      "back": ""
+    },
+    "texture_pattern_transfer": {
+      "front": "",
+      "side": "",
+      "back": ""
+    }
+  },
+  "modes": {
+    "model_tryon": {
+      "image_roles": "Image A（reference_image_1）= 目标模特/人台/人物，是唯一主体来源；Image B 到最后一张图（reference_image_2...reference_image_N）= 全部需要穿戴到 A 身上的商品，可以是服装、鞋子、包袋、帽子、首饰、眼镜、配饰或其他穿戴物。",
+      "global_prompt": "模式：服装穿戴。请严格保留 Image A 中模特/人物的身份、五官、脸型、发型、肤色、身体比例、年龄感、气质与姿态基础不变。请将 Image B 到最后一张图中的所有商品全部自然穿戴到 Image A 模特身上。除图片1外，其余上传图片全部都作为穿戴商品来源，不得遗漏。若 A 模特身上已有同类服装、鞋包或配饰，必须用后续参考图商品替换原有穿戴；若 A 模特身上没有对应品类，则自然添加到正确身体部位。商品颜色、材质、纹理、图案、Logo、文字、五金、结构、比例和细节必须来自对应商品图。禁止把商品图中的背景、道具、其他模特、拍摄环境带入结果。",
+      "front_prompt": "请输出【正面图】。A 模特正面朝向镜头，完整展示所有穿戴商品的正面效果，包括上装、下装、鞋、包、帽子、首饰、眼镜等可见品类。穿戴关系必须真实自然，内搭在内，外套在外，鞋在脚上，包在手/肩/身侧，配饰在对应身体部位。",
+      "side_prompt": "请输出【侧面图】。A 模特严格 90 度侧身，展示所有穿戴商品的侧面轮廓、厚度、垂坠、层次、鞋包配饰位置和真实遮挡关系。必须与正面图保持同一模特、同一套商品、同一穿戴方式。",
+      "back_prompt": "请输出【背面图】。A 模特背对镜头，展示所有穿戴商品的背面结构、后片、后摆、背部图案、包袋背面、鞋跟或配饰背面细节。必须与正面和侧面保持完全同一套商品。",
+      "consistency_prompt": "三张图必须是同一个 A 模特、同一组 B-N 商品、同一套穿戴关系、同一灯光、同一白底、同一镜头距离。只允许视角变化，不允许模特身份、商品款式、颜色、材质、Logo、文字、图案、比例发生变化。",
+      "negative_prompt": "禁止遗漏后续参考图商品；禁止把商品图里的背景、道具、其他人物带入；禁止新增参考图不存在的服装、配饰、文字或 Logo；禁止多人物、拼图、三联图、九宫格、水印、低清晰度、身体畸形、穿帮、错位、漂浮。",
+      "preview_urls": {}
+    },
+    "pose_transfer": {
+      "image_roles": "Image A（reference_image_1）= 主体内容唯一来源；Image B（reference_image_2）= 动作、姿态、肢体语言与表现手法参考。",
+      "global_prompt": "模式：动作迁移。请严格保留 Image A 中主体的所有外观特征，包括造型、颜色、比例、五官、服饰、文字、Logo、图案、材质、结构与细节完全不变，仅让主体做出 Image B 中展示的动作、姿态和肢体语言。生成图片的所有视觉内容必须且只能来自 A；B 只提供动作参考，不得引入 B 的任何具体内容元素。",
+      "front_prompt": "请输出【正面图】。在正面视角下重建动作迁移效果，保持主体仍然完全来自 A，动作来自 B。",
+      "side_prompt": "请输出【侧面图】。在严格侧面视角下重建同一动作与肢体语言，展示清晰侧面动态轮廓。",
+      "back_prompt": "请输出【背面图】。在背面视角下重建同一动作与肢体语言，展示背面动作结构，主体外观仍严格来自 A。",
+      "consistency_prompt": "三张图必须保持同一个 A 图主体与同一个动作迁移逻辑，只改变观看视角。",
+      "negative_prompt": "严禁引入 B 图中的具体文字、图案、角色、装饰、配色方案或额外元素；严禁主体设计漂移、服装变化、五官变化、比例变化。",
+      "preview_urls": {}
+    },
+    "fashion_replace": {
+      "image_roles": "Image A（reference_image_1）= 服装/穿搭来源图；Image B（reference_image_2）= 目标样板/模特/人台。A 只提供服装本身；B 只提供被换装的主体。",
+      "global_prompt": "模式：服装迁移。请保留 Image B 的主体身份、脸部、发型、身体比例、肤色、五官与主体结构不变，仅将 Image A 中的服装、颜色、面料、图案、辅料、结构与配件完整替换到 Image B 身上。如果 B 原本已有穿戴，则全部替换。三次请求使用完全相同的参考图输入，只改变视角提示词。",
+      "front_prompt": "请输出【正面图】。主体正面朝向镜头，完整展示换装后的服装正面信息，清晰展示领口、胸前、门襟、袖型、下摆、正面印花、图案、文字等。",
+      "side_prompt": "请输出【侧面图】。主体严格 90 度侧身，完整展示服装侧面轮廓、厚度、垂坠、侧缝、袖型侧面、层次关系。",
+      "back_prompt": "请输出【背面图】。主体背对镜头，完整展示服装背面结构、后领、后片、背部图案、文字、后摆等细节。",
+      "consistency_prompt": "三张图必须是同一个目标样板、同一套服装、同一灯光、同一白底、同一镜头距离。只允许视角变化，不允许主体身份、服装款式、颜色、面料、比例发生变化。",
+      "negative_prompt": "禁止保留目标样板原有服装；禁止引入额外人物、背景道具、复杂场景；禁止拼图、多视图排版、标注、水印、logo、多人、错误肢体。",
+      "preview_urls": {}
+    },
+    "white_bg_refine": {
+      "image_roles": "Image A（reference_image_1）= 主体来源图。",
+      "global_prompt": "模式：白底主图精修。请以 Image A 为主体来源，在不改变核心商品或主体设计的前提下，输出更适合电商发布的正面、侧面、背面白底图。重点提升清晰度、材质质感、边缘干净度与商业观感。",
+      "front_prompt": "请输出【正面图】。主体正面清晰、白底干净、商业质感强。",
+      "side_prompt": "请输出【侧面图】。主体侧面结构清楚，边缘锐利，便于详情页使用。",
+      "back_prompt": "请输出【背面图】。主体背面信息完整，光影干净，适合白底电商展示。",
+      "consistency_prompt": "三张图保持同一主体与同一白底棚拍风格，只改变视角。",
+      "negative_prompt": "禁止场景化背景、道具、夸张特效、拼版、文字标识、水印、logo。",
+      "preview_urls": {}
+    },
+    "product_three_view": {
+      "image_roles": "Image A（reference_image_1）= 商品唯一内容来源。",
+      "global_prompt": "模式：单品三视图。请以 Image A 的商品为唯一内容来源，生成标准电商三视图。必须严格保留商品的结构、比例、颜色、材质、五金、图案、文字与所有识别性细节。",
+      "front_prompt": "请输出【正面图】。商品居中，正面朝向镜头，完整展示主视觉面。",
+      "side_prompt": "请输出【侧面图】。商品严格侧向展示，清晰显示厚度、侧面结构与轮廓。",
+      "back_prompt": "请输出【背面图】。商品背对镜头，清晰展示背部结构、接口、缝线、后部细节。",
+      "consistency_prompt": "三张图必须是同一个商品，仅改变角度，不改变任何造型、材质、颜色、印花、文字与比例。",
+      "negative_prompt": "禁止支架、场景化背景、道具、额外装饰、拼版、多商品、文字标识、水印、logo。",
+      "preview_urls": {}
+    },
+    "texture_pattern_transfer": {
+      "image_roles": "Image A（reference_image_1）= 印花、面料、花型来源图；Image B（reference_image_2）= 目标服装版型或目标商品。",
+      "global_prompt": "模式：印花面料迁移。请保留 Image B 的服装版型、商品结构、主体轮廓与样板基础不变，仅将 Image A 中的印花、面料肌理、图案风格与色彩方案迁移到 Image B 对应表面。",
+      "front_prompt": "请输出【正面图】。正面清晰展示迁移后的面料、印花覆盖效果与版型关系。",
+      "side_prompt": "请输出【侧面图】。侧面清晰展示面料垂坠、厚度与印花延展逻辑。",
+      "back_prompt": "请输出【背面图】。背面清晰展示印花、面料在背部区域的完整延续效果。",
+      "consistency_prompt": "三张图必须保持同一个目标版型与同一套迁移后的面料、印花方案，只改变视角。",
+      "negative_prompt": "禁止改动目标版型轮廓；禁止引入额外人物、场景、道具、拼贴、标注、水印、logo。",
+      "preview_urls": {}
+    }
+  },
+  "prompts": {}
+}

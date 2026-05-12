@@ -1,0 +1,38 @@
+[project]
+name = "hrio-commerce"
+version = "9.1.0"
+description = "Hrio Commerce Banana image/video generation nodes for ComfyUI, with normal single-output image node, normal single-output video node, and panel editor."
+license = { text = "Proprietary" }
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "numpy",
+    "pillow"
+]
+classifiers = [
+    "Operating System :: OS Independent"
+]
+
+[project.urls]
+Repository = "https://github.com/moki-flank/Hrio-Commerce"
+Documentation = "https://github.com/moki-flank/Hrio-Commerce"
+"Bug Tracker" = "https://github.com/moki-flank/Hrio-Commerce/issues"
+
+[tool.comfy]
+PublisherId = "mokiya"
+DisplayName = "Hrio-Commerce"
+Icon = "https://raw.githubusercontent.com/moki-flank/Hrio-Commerce/main/logo.png"
+Banner = "https://raw.githubusercontent.com/moki-flank/Hrio-Commerce/main/banner.png"
+includes = [
+    "__init__.py",
+    "banana_logger.py",
+    "banana_update.py",
+    "banana_node.py",
+    "banana_triple_view_node.py",
+    "banana_manifest.json",
+    "banana_ecommerce_prompts.json",
+    "config.ini",
+    "web/**/*",
+    "logo.png",
+    "banner.png"
+]
