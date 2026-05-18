@@ -1932,7 +1932,7 @@
         }
 
         const targetWidth = (kind === "video" || kind === "normal_video") ? 360 : (kind === "normal_single" ? 420 : 430);
-        const targetHeight = (kind === "video" || kind === "normal_video") ? 500 : (kind === "normal_single" ? 500 : 500);
+        const targetHeight = (kind === "video" || kind === "normal_video") ? 660 : (kind === "normal_single" ? 620 : 680);
         if (typeof node.setSize === "function" && node.size) {
           const w = Math.max(Number(node.size[0] || 0), targetWidth);
           node.setSize([w, targetHeight]);
@@ -2585,7 +2585,7 @@
 
             <div class="auto-box">
               <h3>输出根目录</h3>
-              <div class="auto-muted">每个序号组会输出到 output_序号/run_01/，例如 output_001/run_01/front.png。可留空，后端自动使用 ComfyUI/output/banana_automation。</div>
+              <div class="auto-muted">每个序号组会输出到“序号文件夹/序号_序位”，例如 001/001_1.png、001/001_2.png、001/001_3.png。可留空，后端自动使用 ComfyUI/output/banana_automation。</div>
               <div style="margin-top:10px;">
                 <input data-auto-output-root placeholder="D:/输出/banana_runs" />
               </div>
@@ -2602,21 +2602,21 @@
                 <label class="auto-muted">组间并发数 1~10
                   <input data-auto-concurrency type="number" min="1" max="10" step="1" />
                 </label>
-                <label class="auto-muted">每组最多参考图 1~10
+                <label class="auto-muted">每组最多参考图 1~10（视频也会读取最多10张；后端不支持全量时自动降级）
                   <input data-auto-max-images type="number" min="1" max="10" step="1" />
                 </label>
                 <label class="auto-muted" style="display:flex; align-items:center; gap:8px;">
-                  <input data-auto-save-images type="checkbox" style="width:auto;" /> 保存 front.png / side.png / back.png
+                  <input data-auto-save-images type="checkbox" style="width:auto;" /> 保存 001_1.png / 001_2.png / 001_3.png
                 </label>
                 <label class="auto-muted" style="display:flex; align-items:center; gap:8px;">
-                  <input data-auto-save-video type="checkbox" style="width:auto;" /> 保存 result.mp4（生视频节点使用；图像节点会忽略）
+                  <input data-auto-save-video type="checkbox" style="width:auto;" /> 保存 001_1.mp4（生视频节点使用；图像节点会忽略）
                 </label>
               </div>
             </div>
 
             <div class="auto-box">
               <h3>操作</h3>
-              <div class="auto-muted">可先预览分组确认序号；也可以直接应用并运行，后端会按 JSON/input_roots 自行扫描。普通图像节点会上传每组参考图并多次重试生成，生视频节点会上传参考图并轮询视频任务。</div>
+              <div class="auto-muted">可先预览分组确认序号；也可以直接应用并运行，后端会按 JSON/input_roots 自行扫描。普通图像节点会上传每组参考图并多次重试生成；生视频节点会上传最多10张参考图并轮询视频任务。</div>
               <div class="auto-actions">
                 <button class="auto-btn" data-auto-preview type="button">预览分组</button>
                 <button class="auto-btn secondary" data-auto-copy type="button">复制 JSON</button>
@@ -3069,6 +3069,8 @@
       extract_rule: "greedy_digits_join_all",
       collect_images_mode: "root_images_group_by_filename_sequence",
       collect_mode: "root_images_group_by_filename_sequence",
+      output_layout: "sequence_folder_numbered_files",
+      numbered_output_filenames: true,
       save_images: state.automation.saveImages !== false,
       save_video: !!state.automation.saveVideo,
       video_filename: "result.mp4",

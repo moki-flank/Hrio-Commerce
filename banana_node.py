@@ -257,13 +257,10 @@ def _video_generate_url(
     use_fallback: bool = False,
 ) -> str:
     """
-    生视频接口 URL。
+    旧 Gemini 原生视频接口 URL。
 
-    兼容两种后端格式：
-    - /v1beta/models/{model}:generateContent
-    - /v1beta/models/{model}:predictLongRunning
-
-    enable_oss=True 时会沿用当前项目的 /oss 路由规则。
+    仅保留给历史代码兼容；当前视频节点不再使用这里。
+    当前视频节点统一走 OpenAI 兼容：/api/oss/v1/chat/completions。
     """
     base = _base_api_root(enable_oss=enable_oss, use_fallback=use_fallback)
     if not base:
@@ -271,6 +268,24 @@ def _video_generate_url(
 
     action = str(action or "generateContent").strip().lstrip(":/") or "generateContent"
     return f"{base}/v1beta/models/{model}:{action}"
+
+
+def _openai_chat_completions_url(enable_oss: bool = True, use_fallback: bool = False) -> str:
+    """
+    OpenAI 兼容聊天/视频统一接口。
+
+    base_url 通常配置为：https://zheshihouduan.tenx-jingli.cloud/api
+    enable_oss=True 时自动得到：
+        https://zheshihouduan.tenx-jingli.cloud/api/oss/v1/chat/completions
+
+    这才是当前 HAI 后端图生视频的正确入口。
+    不再请求 /v1beta/models/veo3.1:generateContent，避免后端返回：
+        Veo models support predictLongRunning, not generateContent
+    """
+    base = _base_api_root(enable_oss=enable_oss, use_fallback=use_fallback)
+    if not base:
+        return ""
+    return f"{base}/v1/chat/completions"
 
 
 def _operation_get_url(operation_name: str, use_fallback: bool = False) -> str:
@@ -4021,7 +4036,7 @@ def _run_video_automation_group(
 
     说明：
     - 视频节点 UI 暴露 prompt / video_model / image_1...image_10；
-    - 自动化时从 input_roots 里按同序号收集最多 4 张图，匹配当前后端 image + referenceImages 上限；
+    - 自动化时从 input_roots 里按同序号收集参考图，数量由 max_images_per_group 控制；
     - 图片会先上传为 OSS/COS 公网 URL，再随提示词传给视频接口；
     - 输出默认走 OSS，并把返回的 mp4 地址下载保存为 result.mp4。
     """
@@ -4029,7 +4044,7 @@ def _run_video_automation_group(
     run_dir = str(group.get("output_dir") or os.path.join(cfg["output_root"], f"output_{seq}", "run_01"))
     os.makedirs(run_dir, exist_ok=True)
     try:
-        image_paths = _collect_automation_group_images(group.get("items") or [], min(4, int(cfg.get("max_images_per_group") or 10)))
+        image_paths = _collect_automation_group_images(group.get("items") or [], int(cfg.get("max_images_per_group") or 10))
         if not image_paths:
             raise RuntimeError(f"序号 {seq} 没有找到可用图片")
 
@@ -4037,7 +4052,13 @@ def _run_video_automation_group(
         if not tensors:
             raise RuntimeError(f"序号 {seq} 图片读取失败，没有可上传的有效图片")
         upload_dir = _cfg_or_manifest("upload_dir", "uploads/images")
-        image_urls = _tensors_to_uploaded_urls(tensors, api_key, upload_dir)
+        image_urls = _tensors_to_uploaded_urls_for_video(
+            tensors,
+            api_key,
+            upload_dir,
+            video_resolution=video_resolution,
+            aspect_ratio=aspect_ratio,
+        )
 
         result = _generate_video_from_prompt(
             api_key,
@@ -4073,7 +4094,7 @@ def _run_video_automation_group(
             "ref_image_count": result.get("ref_image_count") or len(image_urls),
             "video_resolution": result.get("video_resolution") or _normalize_video_resolution(video_resolution),
             "aspect_ratio": result.get("aspect_ratio") or _normalize_video_aspect_ratio(aspect_ratio),
-            "note": "视频自动化会把每个序号组最多 4 张图片作为参考图传入视频接口，匹配当前后端 referenceImages 上限。",
+            "note": "视频自动化会先把同序号组参考图按目标画幅处理并上传到 OSS/COS，再直接调用 OpenAI 兼容 /api/oss/v1/chat/completions 接口，等待返回视频地址。",
         }
         _write_text_file(os.path.join(run_dir, "run_info.json"), json.dumps(meta, ensure_ascii=False, indent=2))
         _append_automation_history_record(meta)
@@ -4567,75 +4588,272 @@ def _poll_video_operation(api_key: str, operation_name: str) -> Tuple[List[str],
         time.sleep(poll_interval)
 
 
+
+
+def _video_canvas_size(aspect_ratio: Any, video_resolution: Any) -> Tuple[int, int]:
+    """返回视频目标画布尺寸 (width, height)。"""
+    ratio = _normalize_video_aspect_ratio(aspect_ratio or "16:9")
+    resolution = _normalize_video_resolution(video_resolution or "1080p")
+
+    mapping = {
+        ("16:9", "720p"): (1280, 720),
+        ("16:9", "1080p"): (1920, 1080),
+        ("16:9", "4k"): (4096, 2304),
+        ("9:16", "720p"): (720, 1280),
+        ("9:16", "1080p"): (1080, 1920),
+        ("9:16", "4k"): (2304, 4096),
+    }
+    if (ratio, resolution) in mapping:
+        return mapping[(ratio, resolution)]
+
+    if ratio == "9:16":
+        return 720, 1280
+    return 1280, 720
+
+
+def _video_orientation_label(aspect_ratio: Any) -> str:
+    ratio = _normalize_video_aspect_ratio(aspect_ratio or "16:9")
+    return "portrait / vertical / 竖屏" if ratio == "9:16" else "landscape / horizontal / 横屏"
+
+
+def _build_video_canvas_lock_prompt(
+    prompt: str,
+    *,
+    video_resolution: Any,
+    aspect_ratio: Any,
+    target_w: int,
+    target_h: int,
+) -> str:
+    """
+    给视频提示词追加强约束。
+    不写死“不要改成横图”，而是根据当前目标画幅锁定横屏/竖屏。
+    """
+    text = str(prompt or "").strip()
+    ratio = _normalize_video_aspect_ratio(aspect_ratio or "16:9")
+    resolution = _normalize_video_resolution(video_resolution or "1080p")
+    orientation = _video_orientation_label(ratio)
+
+    lock = f"""
+
+[CRITICAL VIDEO REFERENCE CANVAS LOCK — HARD REQUIREMENT, NOT STYLE]
+Target video canvas: {target_w}x{target_h}; aspect ratio: {ratio}; orientation: {orientation}; resolution: {resolution}.
+The attached reference image URLs are the source-of-truth for the video frame.
+Generate the video using the exact same canvas ratio, canvas direction, framing boundary, subject placement, and composition space as the attached reference image(s).
+If the target is landscape, keep landscape. If the target is portrait, keep portrait.
+Do NOT rotate the canvas. Do NOT convert between portrait and landscape.
+Do NOT crop to square or another aspect ratio. Do NOT pad with borders. Do NOT auto-reframe or expand the canvas.
+Only generate motion inside this locked frame; keep the camera frame and subject placement consistent with the reference image canvas.
+中文硬约束：严格按照参考图片附件的画幅比例、画幅方向、镜头边界、主体位置和构图空间生成视频；目标是横屏就保持横屏，目标是竖屏就保持竖屏；不得横竖屏互转，不得裁成方图，不得加边框，不得自动改画幅。
+""".strip()
+
+    return f"{text}\n\n{lock}" if text else lock
+
+
+def _resize_video_reference_tensor_batch(
+    t: torch.Tensor,
+    *,
+    target_w: int,
+    target_h: int,
+) -> torch.Tensor:
+    """
+    视频参考图上传前预处理。
+
+    需求：如果参考图不满足目标比例/分辨率，先按比例缩放，再强制拉伸到目标画布，
+    然后再上传为 OSS 附件。
+
+    这里对所有视频参考图统一输出 target_h x target_w，避免后端/手机端上传时仍读到原始比例。
+    """
+    batch = t.detach().cpu().float().clamp(0, 1)
+    if batch.ndim == 3:
+        batch = batch.unsqueeze(0)
+    if batch.ndim != 4:
+        return t.detach().cpu()
+
+    out: List[torch.Tensor] = []
+    for idx in range(batch.shape[0]):
+        item = batch[idx]
+        src_h = int(item.shape[0])
+        src_w = int(item.shape[1])
+        if src_w <= 0 or src_h <= 0:
+            out.append(item)
+            continue
+
+        # 第一步：保持原始比例缩放，cover 到目标画布范围。
+        scale = max(float(target_w) / float(src_w), float(target_h) / float(src_h))
+        scaled_w = max(1, int(round(src_w * scale)))
+        scaled_h = max(1, int(round(src_h * scale)))
+
+        x = item.unsqueeze(0).permute(0, 3, 1, 2)
+        if scaled_w != src_w or scaled_h != src_h:
+            x = torch.nn.functional.interpolate(
+                x,
+                size=(scaled_h, scaled_w),
+                mode="bilinear",
+                align_corners=False,
+            )
+
+        # 第二步：强制拉伸到精确目标画布尺寸。
+        if scaled_w != int(target_w) or scaled_h != int(target_h):
+            x = torch.nn.functional.interpolate(
+                x,
+                size=(int(target_h), int(target_w)),
+                mode="bilinear",
+                align_corners=False,
+            )
+
+        final = x.permute(0, 2, 3, 1).squeeze(0).clamp(0, 1)
+        out.append(final)
+
+        try:
+            logger.info(
+                f"[video-ref-preprocess] 参考图 {idx + 1}: "
+                f"src={src_w}x{src_h}, scaled={scaled_w}x{scaled_h}, target={target_w}x{target_h}"
+            )
+        except Exception:
+            pass
+
+    return torch.stack(out, dim=0)
+
+
+def _tensors_to_uploaded_urls_for_video(
+    tensors: List[torch.Tensor],
+    api_key: str,
+    upload_dir: str,
+    *,
+    video_resolution: Any,
+    aspect_ratio: Any,
+) -> List[str]:
+    target_w, target_h = _video_canvas_size(aspect_ratio, video_resolution)
+    ratio = _normalize_video_aspect_ratio(aspect_ratio)
+    resolution = _normalize_video_resolution(video_resolution)
+
+    logger.info(
+        f"[video-ref-preprocess] 视频参考图上传前处理开始: "
+        f"target={target_w}x{target_h}, aspect_ratio={ratio}, resolution={resolution}, groups={len(tensors)}"
+    )
+
+    processed: List[torch.Tensor] = []
+    for t in tensors or []:
+        if t is None:
+            continue
+        processed.append(
+            _resize_video_reference_tensor_batch(
+                t,
+                target_w=target_w,
+                target_h=target_h,
+            )
+        )
+
+    return _tensors_to_uploaded_urls(processed, api_key, upload_dir)
+
+
+def _upload_reference_images_for_video_node(
+    kwargs: Dict[str, Any],
+    api_key: str,
+    *,
+    video_resolution: Any,
+    aspect_ratio: Any,
+) -> List[str]:
+    tensors = _collect_reference_tensors_from_kwargs(kwargs)
+    if not tensors:
+        return []
+
+    upload_dir = _cfg_or_manifest("upload_dir", "uploads/images")
+    logger.info(
+        f"检测到 {len(tensors)} 组视频参考图，先按目标画幅处理后再上传；"
+        f"resolution={_normalize_video_resolution(video_resolution)}, "
+        f"aspect_ratio={_normalize_video_aspect_ratio(aspect_ratio)}"
+    )
+    return _tensors_to_uploaded_urls_for_video(
+        tensors,
+        api_key,
+        upload_dir,
+        video_resolution=video_resolution,
+        aspect_ratio=aspect_ratio,
+    )
+
+
 def _build_video_payloads(
     prompt: str,
     image_urls: List[str] | None = None,
     video_resolution: Any = None,
     aspect_ratio: Any = None,
+    model: str = "veo3.1",
 ) -> List[Tuple[str, Dict[str, Any]]]:
     """
-    Veo 只走 predictLongRunning。
+    生视频统一改为 OpenAI 兼容协议：
 
-    修复点：
-    1. 不再先打 generateContent，避免必然 400：Veo models support predictLongRunning。
-    2. UI 的 720p 会在 _normalize_video_resolution() 中兼容成后端合法的 720p。
-    3. 参考图按当前后端 veo_protocol.py 能识别的字段发送：
-       - 第一张作为 instances[0].image
-       - 后面最多 3 张作为 parameters.referenceImages
-       因为当前后端限制 referenceImages supports up to 3 images，所以插件侧直接截断，后端不需要做兼容。
+    POST /api/oss/v1/chat/completions
+
+    请求体：
+    {
+      "model": "veo3.1",
+      "messages": [{"role":"user", "content": [text, image_url...]}],
+      "stream": false,
+      "enable_oss": true,
+      "aspect_ratio": "16:9" / "9:16",
+      "resolution_keyword": "720p" / "1080p" / "4k"
+    }
+
+    不再走 /v1beta/models/veo3.1:generateContent。
     """
     resolution = _normalize_video_resolution(video_resolution or _cfg_or_manifest("veo_resolution", "1080p"))
     aspect_actual = _normalize_video_aspect_ratio(aspect_ratio or _cfg_or_manifest("veo_aspect_ratio", "16:9"))
     duration = _safe_int(_cfg_or_manifest("veo_duration_seconds", "8"), 8, 1, 60)
     count = _safe_int(_cfg_or_manifest("veo_number_of_videos", "1"), 1, 1, 4)
+    target_w, target_h = _video_canvas_size(aspect_actual, resolution)
 
-    # 1080p / 720p 图生视频统一 8 秒，和后端校验保持一致。
+    # 与后端当前稳定视频生成保持一致。
     if resolution in {"1080p", "720p", "4k"}:
         duration = 8
 
-    text = str(prompt or "").strip()
-    # 当前后端只支持：instances[0].image + parameters.referenceImages 最多 3 张。
-    # 所以视频节点最多发送 4 张参考图，避免后端返回 referenceImages supports up to 3 images。
-    refs = [str(u or "").strip() for u in (image_urls or []) if str(u or "").strip()][:4]
+    text = _build_video_canvas_lock_prompt(
+        str(prompt or "").strip(),
+        video_resolution=resolution,
+        aspect_ratio=aspect_actual,
+        target_w=target_w,
+        target_h=target_h,
+    )
+    refs = [str(u or "").strip() for u in (image_urls or []) if str(u or "").strip()]
 
-    media_items: List[Dict[str, Any]] = []
-    for u in refs:
-        media_items.append({
-            "uri": u,
-            "fileUri": u,
-            "mimeType": _guess_mime_from_url(u, "image/png"),
-        })
-
-    instance: Dict[str, Any] = {"prompt": text}
-    if media_items:
-        instance["image"] = media_items[0]
-
-    parameters: Dict[str, Any] = {
-        "resolution": resolution,
-        "video_resolution": resolution,
-        "aspectRatio": aspect_actual,
-        "aspect_ratio": aspect_actual,
-        "durationSeconds": duration,
-        "sampleCount": count,
-        "numberOfVideos": count,
-        "storage": "oss",
-    }
-    if len(media_items) > 1:
-        parameters["referenceImages"] = media_items[1:]
-
-    return [
-        (
-            "predictLongRunning",
-            {
-                "instances": [instance],
-                "parameters": parameters,
-                "enable_oss": True,
-                "image_size": resolution,
-                "video_resolution": resolution,
-                "aspect_ratio": aspect_actual,
-            },
-        )
+    content: List[Dict[str, Any]] = [
+        {
+            "type": "text",
+            "text": text,
+        }
     ]
+
+    for u in refs:
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": u,
+                    "mime_type": _guess_mime_from_url(u, "image/png"),
+                },
+            }
+        )
+
+    body: Dict[str, Any] = {
+        "model": str(model or "veo3.1").strip() or "veo3.1",
+        "messages": [
+            {
+                "role": "user",
+                "content": content,
+            }
+        ],
+        "stream": False,
+        "enable_oss": True,
+        "aspect_ratio": aspect_actual,
+        "resolution_keyword": resolution,
+        # 下面几个字段后端如果支持会使用；不支持也通常会被 Pydantic 忽略。
+        "video_resolution": resolution,
+        "duration_seconds": duration,
+        "number_of_videos": count,
+    }
+
+    return [("openai_chat_completions", body)]
+
 
 def _generate_video_from_prompt(
     api_key: str,
@@ -4653,7 +4871,7 @@ def _generate_video_from_prompt(
     if not text:
         raise RuntimeError("请填写视频提示词")
 
-    refs = [str(u or "").strip() for u in (image_urls or []) if str(u or "").strip()][:4]
+    refs = [str(u or "").strip() for u in (image_urls or []) if str(u or "").strip()]
 
     display_model = str(video_model or _manual_video_model_default()).strip()
     actual_model = _MODEL_DISPLAY_TO_ACTUAL.get(display_model, display_model)
@@ -4671,7 +4889,7 @@ def _generate_video_from_prompt(
     resolved_video_resolution = _normalize_video_resolution(video_resolution or _cfg_or_manifest("veo_resolution", "1080p"))
     resolved_aspect_ratio = _normalize_video_aspect_ratio(aspect_ratio or _cfg_or_manifest("veo_aspect_ratio", "16:9"))
 
-    for action, payload in _build_video_payloads(text, refs, resolved_video_resolution, resolved_aspect_ratio):
+    for action, payload in _build_video_payloads(text, refs, resolved_video_resolution, resolved_aspect_ratio, model=actual_model):
         try:
             logger.info(
                 f"生视频节点请求: model={actual_model}, action={action}, resolution={resolved_video_resolution}, "
@@ -4679,13 +4897,12 @@ def _generate_video_from_prompt(
             )
             _, data, route_name, used_url = _request_json_with_failover(
                 "POST",
-                _video_generate_url,
-                builder_args=(actual_model,),
-                builder_kwargs={"action": action, "enable_oss": True},
+                _openai_chat_completions_url,
+                builder_kwargs={"enable_oss": True},
                 headers=headers,
                 json_payload=payload,
                 timeout=_cfg_int("read_timeout_sec", _TIMEOUT_IMAGE),
-                action_name=f"AI 生视频 {actual_model}:{action}",
+                action_name=f"AI 生视频 OpenAI兼容 {actual_model}",
             )
 
             raw_payload = data if isinstance(data, dict) else {"raw": data}
@@ -4706,36 +4923,16 @@ def _generate_video_from_prompt(
                     "aspect_ratio": resolved_aspect_ratio,
                 }
 
-            op_name = _extract_operation_name(raw_payload)
-            if op_name:
-                urls, final_payload = _poll_video_operation(resolved_key, op_name)
-                return {
-                    "ok": True,
-                    "model": actual_model,
-                    "display_model": display_model,
-                    "action": action,
-                    "route": route_name,
-                    "url": used_url,
-                    "operation": op_name,
-                    "mp4url": urls[0],
-                    "all_urls": urls,
-                    "raw": final_payload,
-                    "ref_image_count": len(refs),
-                    "video_resolution": resolved_video_resolution,
-                    "aspect_ratio": resolved_aspect_ratio,
-                }
-
-            raise RuntimeError(f"视频接口未返回 mp4 地址或 operation：{json.dumps(raw_payload, ensure_ascii=False)[:2000]}")
+            raise RuntimeError(f"视频接口未直接返回 mp4/mov/webm 地址：{json.dumps(raw_payload, ensure_ascii=False)[:2000]}")
 
         except Exception as e:
             last_error = e
-            logger.warning(f"生视频 action={action} 失败，尝试下一种接口格式: {e}")
+            logger.warning(f"生视频 action={action} 失败: {e}")
             continue
 
     if last_error:
         raise last_error
     raise RuntimeError("视频生成失败：没有可用的视频接口格式")
-
 
 
 class HrioBananaNormalFiveViewConcurrentNode:
@@ -5346,7 +5543,7 @@ class HrioBananaNormalVideoSingleOutputNode:
             optional[f"image_{i}"] = (
                 "IMAGE",
                 {
-                    "tooltip": f"视频参考图 {i}；当前后端实际最多发送 4 张：第 1 张 image，后 3 张 referenceImages。",
+                    "tooltip": f"视频参考图 {i}；会先按目标画幅处理并上传到 OSS/COS，再通过 OpenAI 兼容 /v1/chat/completions 发送给视频模型。",
                 },
             )
 
@@ -5433,7 +5630,12 @@ class HrioBananaNormalVideoSingleOutputNode:
             )
 
         try:
-            image_urls = _upload_reference_images_for_node(kwargs, resolved_key)
+            image_urls = _upload_reference_images_for_video_node(
+                kwargs,
+                resolved_key,
+                video_resolution=video_resolution,
+                aspect_ratio=aspect_ratio,
+            )
             result = _generate_video_from_prompt(
                 resolved_key,
                 prompt,
@@ -5521,7 +5723,7 @@ class HrioBananaPromptVideoNode:
             optional[f"image_{i}"] = (
                 "IMAGE",
                 {
-                    "tooltip": f"视频参考图 {i}；生视频节点支持最多 10 张输入图。",
+                    "tooltip": f"视频参考图 {i}；会先按目标画幅处理并上传到 OSS/COS，再通过 OpenAI 兼容 /v1/chat/completions 发送给视频模型。",
                 },
             )
 
@@ -5609,7 +5811,12 @@ class HrioBananaPromptVideoNode:
             )
 
         try:
-            image_urls = _upload_reference_images_for_node(kwargs, resolved_key)
+            image_urls = _upload_reference_images_for_video_node(
+                kwargs,
+                resolved_key,
+                video_resolution=video_resolution,
+                aspect_ratio=aspect_ratio,
+            )
             result = _generate_video_from_prompt(
                 resolved_key,
                 prompt,
@@ -5632,7 +5839,7 @@ class HrioBananaPromptVideoNode:
                 "enable_oss: True",
                 f"ref_image_count: {result.get('ref_image_count') or 0}",
                 f"mp4url: {mp4url}",
-                "说明：节点界面显示提示词、模型、API Key、视频分辨率、横竖屏比例和参考图；为匹配当前后端协议，视频最多发送 4 张参考图，其中第 1 张为 image，后 3 张为 referenceImages。",
+                "说明：视频节点现在会先把参考图按目标画幅处理并上传到 OSS/COS，然后直接调用 OpenAI 兼容 /api/oss/v1/chat/completions 接口，并同步等待接口返回视频地址。",
             ])
             logger.summary("Banana 生视频完成", {
                 "模型": f"{result.get('display_model')} / {result.get('model')}",
